@@ -52,7 +52,7 @@ namespace LinkSpider3.Process
             bool crawlChildLinks, bool poolChildLinksFound)
         {
             this.CM = cm;
-            this.Redis = cm.PRCM.GetClient();
+            this.Redis = cm.Redis;
             this.Link = link;
             this.CurrentBacklink = LinkParser.Validate(backlink, string.Empty);
             this.LinkInfo = new LinkInfo(cm, this.Link, this.CurrentBacklink, text, rel, kind);
@@ -65,7 +65,7 @@ namespace LinkSpider3.Process
             }
         }
 
-        ~Collector() { if (this.Redis != null) this.Redis.Dispose(); }
+        // ~Collector() { if (this.Redis != null) this.Redis.Dispose(); }
 
 
         void SaveLink()

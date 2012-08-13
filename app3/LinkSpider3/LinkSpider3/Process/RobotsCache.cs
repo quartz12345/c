@@ -20,7 +20,7 @@ namespace LinkSpider3.Process
 
         public RobotsCache(CollectorManager cm, string domainSchemeAndServer)
         {
-            this.Redis = cm.PRCM.GetClient();
+            this.Redis = cm.Redis;
             this.DomainSchemeAndServer = new Uri(domainSchemeAndServer).AbsoluteUri;
             this.RobotID = "urn:domain:robots:data";
             this.RobotLastDateCrawlID = "urn:domain:robots:last-date-crawl";
@@ -35,7 +35,7 @@ namespace LinkSpider3.Process
             }
         }
 
-        ~RobotsCache() { if (this.Redis != null) this.Redis.Dispose(); }
+        //~RobotsCache() { if (this.Redis != null) this.Redis.Dispose(); }
 
 
         bool TryRetrieveFromCache()

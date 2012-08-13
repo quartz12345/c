@@ -26,9 +26,9 @@ namespace LinkSpider3.Process
         public List<int> CollectorCount { get; private set; }
         public List<string> LinksAccessing { get; private set; }
         internal Dictionary<string, LinkCollectorTaskPair> Collectors;
-        internal BasicRedisClientManager PRCM;
+        internal IRedisClient Redis;
 
-        IRedisClient Redis;
+        BasicRedisClientManager PRCM;
         int COLLECTOR_COUNT = 2;
         System.Timers.Timer CrawlNextLinkQueueManager = null;
         System.Timers.Timer CollectorsManager = null;
@@ -57,8 +57,8 @@ namespace LinkSpider3.Process
             // Initialize and start collectors only once
             if (this.Redis == null)
             {
-                this.PRCM = new BasicRedisClientManager(redisServer);
-                this.Redis = this.PRCM.GetClient();
+                //this.PRCM = new BasicRedisClientManager(redisServer);
+                this.Redis = new RedisClient(redisServer);
 
                 if (CrawlNextLinkQueueManager == null)
                 {
