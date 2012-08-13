@@ -111,6 +111,8 @@ namespace LinkSpider3.Process
                 //me.Redis.SetEntryInHash("urn:link:date-last-crawl",
                 //    DateTime.Today.ToString(), dateLastCrawlLinks.JsonSerialize());
                 urnLinkDateLastCrawl.Set(DateTime.Today.ToString(), dateLastCrawlLinks.JsonSerialize());
+
+                myRedis.Close();
             }
 
 
