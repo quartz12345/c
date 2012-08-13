@@ -60,7 +60,12 @@ namespace LinkSpider3
             if (this.InvokeRequired)
                 this.Invoke(new ChangeStatusLabelHandler(ChangeStatusLabel), text);
             else
+            {
                 this.toolStripStatusLabel1.Text = text;
+                this.toolStripStatusLabel2.Text = "Collected urls today: " +
+                    this.CM.GetCollectedLinksAsAt(DateTime.Today);
+                this.toolStripStatusLabel3.Text = string.Empty;
+            }
         }
         #endregion
 
@@ -158,6 +163,14 @@ namespace LinkSpider3
             {
                 this.txtRedisServer.Text = "127.0.0.1";
             }
+        }
+
+        private void chkCrawlNew_CheckedChanged(object sender, EventArgs e)
+        {
+            CM.SetCollectionDirection(
+                (this.chkCrawlNew.Checked ?
+                    CollectorManager.COLLECTOR_DIRECTION_NEWEST :
+                    CollectorManager.COLLECTOR_DIRECTION_OLDEST));
         }
     }
 }

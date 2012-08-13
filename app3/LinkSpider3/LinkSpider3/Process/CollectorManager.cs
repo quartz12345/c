@@ -8,7 +8,8 @@ using System.Timers;
 using System.ComponentModel;
 using LinkSpider3.Hack;
 using System.Configuration;
-using ServiceStack.Redis;
+//using ServiceStack.Redis;
+using TeamDev.Redis;
 
 namespace LinkSpider3.Process
 {
@@ -26,10 +27,15 @@ namespace LinkSpider3.Process
         public List<int> CollectorCount { get; private set; }
         public List<string> LinksAccessing { get; private set; }
         internal Dictionary<string, LinkCollectorTaskPair> Collectors;
-        internal IRedisClient Redis;
+        //internal IRedisClient Redis;
+        internal RedisDataAccessProvider Redis;
 
-        BasicRedisClientManager PRCM;
+        //BasicRedisClientManager PRCM;
+        public const int COLLECTOR_DIRECTION_OLDEST = 1;
+        public const int COLLECTOR_DIRECTION_NEWEST = 2;
+
         int COLLECTOR_COUNT = 2;
+        internal int COLLECTOR_DIRECTION = COLLECTOR_DIRECTION_OLDEST;
         System.Timers.Timer CrawlNextLinkQueueManager = null;
         System.Timers.Timer CollectorsManager = null;
         System.Timers.Timer PoolManager = null;
@@ -48,7 +54,7 @@ namespace LinkSpider3.Process
         ~CollectorManager() 
         {
             if (this.Redis != null) this.Redis.Dispose();
-            if (this.PRCM != null) this.PRCM.Dispose();
+            //if (this.PRCM != null) this.PRCM.Dispose();
         }
 
 
@@ -58,7 +64,10 @@ namespace LinkSpider3.Process
             if (this.Redis == null)
             {
                 //this.PRCM = new BasicRedisClientManager(redisServer);
-                this.Redis = new RedisClient(redisServer);
+                //this.Redis = new RedisClient(redisServer);
+                this.Redis = new RedisDataAccessProvider();
+                this.Redis.Configuration = new TeamDev.Redis.LanguageItems.Configuration();
+                this.Redis.Configuration.Host = redisServer;
 
                 if (CrawlNextLinkQueueManager == null)
                 {
@@ -139,9 +148,15 @@ namespace LinkSpider3.Process
         {
             try
             {
-                url = new Uri(url).AbsoluteUri;
-                Redis.RemoveItemFromList("urn:pool", url);
-                Redis.PrependItemToList("urn:pool", url);
+                url = LinkParser.Validate(url, string.Empty);
+                
+                //Redis.RemoveItemFromList("urn:pool", url);
+                //Redis.PrependItemToList("urn:pool", url);
+                if (!string.IsNullOrEmpty(url))
+                {
+                    Redis.List["urn:pool"].Remove(url);
+                    Redis.List["urn:pool"].Prepend(url);
+                }
             }
             catch { }
         }
@@ -149,6 +164,16 @@ namespace LinkSpider3.Process
         public void SetWorkerCount(int count)
         {
             COLLECTOR_COUNT = count;
+        }
+
+        public void SetCollectionDirection(int direction)
+        {
+            COLLECTOR_DIRECTION = direction;
+        }
+
+        public int GetCollectedLinksAsAt(DateTime date)
+        {
+            return Redis.Hash["urn:link:date-last-crawl"][date.ToString()].JsonDeserialize<List<string>>().Count;
         }
 
         public void ReIndex()
@@ -192,8 +217,22 @@ namespace LinkSpider3.Process
             // Limit workers
             if (m.LinksCurrentlyProcessing.Count < m.COLLECTOR_COUNT)
             {
-                string link = m.Redis.DequeueItemFromList("urn:pool");
-                link = LinkParser.Validate(link, string.Empty);
+                //string link = m.Redis.DequeueItemFromList("urn:pool");
+                string link = string.Empty;
+
+                try
+                {
+                    if (m.COLLECTOR_DIRECTION == COLLECTOR_DIRECTION_OLDEST)
+                        link = m.Redis.List["urn:pool"].LeftPop();
+                    else
+                        link = m.Redis.List["urn:pool"].RightPop();
+                }
+                catch { }
+
+                if (!string.IsNullOrEmpty(link))
+                {
+                    link = LinkParser.Validate(link, string.Empty);
+                }
 
                 if (!string.IsNullOrEmpty(link))
                 {
@@ -204,20 +243,30 @@ namespace LinkSpider3.Process
                     if (m.IsDomainOrSubdomainCurrentlyCrawled(info.DomainOrSubdomain))
                     {
                         Thread.Sleep(500);
-                        m.Redis.AddItemToList("urn:pool", link);
+                        //m.Redis.AddItemToList("urn:pool", link);
+
+                        if (m.COLLECTOR_DIRECTION == COLLECTOR_DIRECTION_OLDEST)
+                            m.Redis.List["urn:pool"].Append(link);
+                        else
+                            m.Redis.List["urn:pool"].Prepend(link);
+
                         m.LinksCurrentlyProcessing.Remove(link);
                     }
                     else
                     {
                         DateTime? lastDateCrawl = null;
-                        if (m.Redis.HashContainsEntry("urn:link:data-last-date-crawl", info.Link))
+                        //if (m.Redis.HashContainsEntry("urn:link:data-last-date-crawl", info.Link))
+                        if (m.Redis.Hash["urn:link:data-last-date-crawl"].ContainsKey(info.Link))
                         {
+                            //lastDateCrawl = Convert.ToDateTime(
+                            //    m.Redis.GetValueFromHash("urn:link:data-last-date-crawl", info.Link));
                             lastDateCrawl = Convert.ToDateTime(
-                                m.Redis.GetValueFromHash("urn:link:data-last-date-crawl", info.Link));
+                                m.Redis.Hash["urn:link:data-last-date-crawl"][info.Link]);
                         }
 
                         if (!lastDateCrawl.HasValue ||
-                            (DateTime.Now - lastDateCrawl.Value).Days > 30)
+                            (DateTime.Now - lastDateCrawl.Value).Days > 30 ||
+                            m.COLLECTOR_DIRECTION == COLLECTOR_DIRECTION_NEWEST)
                         {
                             // Only crawl if the link has not been crawled since
                             // And if the last crawl was 30 days ago

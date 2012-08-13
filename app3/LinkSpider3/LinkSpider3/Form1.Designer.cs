@@ -46,6 +46,8 @@
             this.txtRedisServer = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
+            this.chkCrawlNew = new System.Windows.Forms.CheckBox();
+            this.toolStripStatusLabel3 = new System.Windows.Forms.ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)(this.bsLinksCurrentlyProcessing)).BeginInit();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -61,7 +63,7 @@
             // 
             // btnStartStop
             // 
-            this.btnStartStop.Location = new System.Drawing.Point(169, 32);
+            this.btnStartStop.Location = new System.Drawing.Point(272, 32);
             this.btnStartStop.Name = "btnStartStop";
             this.btnStartStop.Size = new System.Drawing.Size(64, 23);
             this.btnStartStop.TabIndex = 1;
@@ -73,7 +75,8 @@
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1,
-            this.toolStripStatusLabel2});
+            this.toolStripStatusLabel2,
+            this.toolStripStatusLabel3});
             this.statusStrip1.Location = new System.Drawing.Point(0, 663);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(713, 22);
@@ -148,7 +151,7 @@
             // 
             // btnIndexCrawlDate
             // 
-            this.btnIndexCrawlDate.Location = new System.Drawing.Point(272, 32);
+            this.btnIndexCrawlDate.Location = new System.Drawing.Point(391, 33);
             this.btnIndexCrawlDate.Name = "btnIndexCrawlDate";
             this.btnIndexCrawlDate.Size = new System.Drawing.Size(104, 23);
             this.btnIndexCrawlDate.TabIndex = 8;
@@ -193,11 +196,29 @@
             this.label3.TabIndex = 12;
             this.label3.Text = "Collectors to spawn";
             // 
+            // chkCrawlNew
+            // 
+            this.chkCrawlNew.AutoSize = true;
+            this.chkCrawlNew.Location = new System.Drawing.Point(155, 35);
+            this.chkCrawlNew.Name = "chkCrawlNew";
+            this.chkCrawlNew.Size = new System.Drawing.Size(81, 18);
+            this.chkCrawlNew.TabIndex = 13;
+            this.chkCrawlNew.Text = "Crawl New";
+            this.chkCrawlNew.UseVisualStyleBackColor = true;
+            this.chkCrawlNew.CheckedChanged += new System.EventHandler(this.chkCrawlNew_CheckedChanged);
+            // 
+            // toolStripStatusLabel3
+            // 
+            this.toolStripStatusLabel3.Name = "toolStripStatusLabel3";
+            this.toolStripStatusLabel3.Size = new System.Drawing.Size(118, 17);
+            this.toolStripStatusLabel3.Text = "toolStripStatusLabel3";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 14F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(713, 685);
+            this.Controls.Add(this.chkCrawlNew);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.txtRedisServer);
@@ -244,6 +265,8 @@
         private System.Windows.Forms.TextBox txtRedisServer;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.CheckBox chkCrawlNew;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel3;
     }
 }
 

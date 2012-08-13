@@ -5,7 +5,8 @@ using System.Text;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Configuration;
-using ServiceStack.Redis;
+//using ServiceStack.Redis;
+using TeamDev.Redis;
 
 namespace LinkSpider3.Process
 {
@@ -16,7 +17,8 @@ namespace LinkSpider3.Process
         public string RobotID;
         public string RobotLastDateCrawlID;
 
-        IRedisClient Redis;
+        //IRedisClient Redis;
+        RedisDataAccessProvider Redis;
 
         public RobotsCache(CollectorManager cm, string domainSchemeAndServer)
         {
@@ -28,10 +30,15 @@ namespace LinkSpider3.Process
             if (!TryRetrieveFromCache())
             {
                 RetrieveRobots();
-                this.Redis.SetEntryInHash(this.RobotID, this.DomainSchemeAndServer,
-                    this.RobotsExclusion.JsonSerialize());
-                this.Redis.SetEntryInHash(this.RobotLastDateCrawlID,this.DomainSchemeAndServer,
-                    DateTime.Now.ToString());
+                //this.Redis.SetEntryInHash(this.RobotID, this.DomainSchemeAndServer,
+                //    this.RobotsExclusion.JsonSerialize());
+                this.Redis.Hash[this.RobotID][this.DomainSchemeAndServer] =
+                    this.RobotsExclusion.JsonSerialize();
+
+                //this.Redis.SetEntryInHash(this.RobotLastDateCrawlID,this.DomainSchemeAndServer,
+                //    DateTime.Now.ToString());
+                this.Redis.Hash[this.RobotLastDateCrawlID][this.DomainSchemeAndServer] =
+                    DateTime.Now.ToString();
             }
         }
 
@@ -41,9 +48,15 @@ namespace LinkSpider3.Process
         bool TryRetrieveFromCache()
         {
             DateTime? lastCrawl = null;
-            if (this.Redis.HashContainsEntry(this.RobotLastDateCrawlID, this.DomainSchemeAndServer))
+            //if (this.Redis.HashContainsEntry(this.RobotLastDateCrawlID, this.DomainSchemeAndServer))
+            //    lastCrawl = Convert.ToDateTime(
+            //        this.Redis.GetValueFromHash(this.RobotLastDateCrawlID, this.DomainSchemeAndServer));
+
+            if (this.Redis.Hash[this.RobotLastDateCrawlID].ContainsKey(this.DomainSchemeAndServer))
+            {
                 lastCrawl = Convert.ToDateTime(
-                    this.Redis.GetValueFromHash(this.RobotLastDateCrawlID, this.DomainSchemeAndServer));
+                    this.Redis.Hash[this.RobotLastDateCrawlID][this.DomainSchemeAndServer]);
+            }
 
             if (lastCrawl.HasValue)
             {
@@ -55,8 +68,12 @@ namespace LinkSpider3.Process
                 }
                 else
                 {
-                    RobotsExclusion = 
-                        this.Redis.GetValueFromHash(this.RobotID, this.DomainSchemeAndServer)
+                    //RobotsExclusion = 
+                    //    this.Redis.GetValueFromHash(this.RobotID, this.DomainSchemeAndServer)
+                    //        .JsonDeserialize<List<string>>();
+
+                    RobotsExclusion =
+                        this.Redis.Hash[this.RobotID][this.DomainSchemeAndServer]
                             .JsonDeserialize<List<string>>();
 
                     return true;

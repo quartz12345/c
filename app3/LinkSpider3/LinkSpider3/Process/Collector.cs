@@ -6,9 +6,10 @@ using System.Net;
 using HtmlAgilityPack;
 using System.Text.RegularExpressions;
 using System.Configuration;
-using ServiceStack.Redis;
 using System.Threading;
 using System.Diagnostics;
+//using ServiceStack.Redis;
+using TeamDev.Redis;
 
 namespace LinkSpider3.Process
 {
@@ -43,7 +44,8 @@ namespace LinkSpider3.Process
         public bool PoolChildLinksFound { get; set; }
 
         CollectorManager CM;
-        IRedisClient Redis;
+        //IRedisClient Redis;
+        RedisDataAccessProvider Redis;
         static object o = new object();
 
         Collector(
@@ -58,7 +60,10 @@ namespace LinkSpider3.Process
             this.LinkInfo = new LinkInfo(cm, this.Link, this.CurrentBacklink, text, rel, kind);
             if (!this.LinkInfo.LinkExcludedInRobots)
             {
-                SaveLink();
+                lock (o)
+                {
+                    SaveLink(this);
+                }
 
                 if (crawlChildLinks)
                     CrawlChildLinks();
@@ -68,99 +73,120 @@ namespace LinkSpider3.Process
         // ~Collector() { if (this.Redis != null) this.Redis.Dispose(); }
 
 
-        void SaveLink()
+        static void SaveLink(Collector c)
         {
-            IRedisHash urnLinkData = this.Redis.Hashes["urn:link:data"];
-            if (urnLinkData.ContainsKey(this.Link))
+            //IRedisHash urnLinkData = this.Redis.Hashes["urn:link:data"];
+            var urnLinkData = c.Redis.Hash["urn:link:data"];
+            if (urnLinkData.ContainsKey(c.Link))
             {
-                string serializedLinkData = urnLinkData[this.Link];
-                this.LinkInfo.Merge(serializedLinkData.JsonDeserialize<LinkInfo>());
+                string serializedLinkData = urnLinkData[c.Link];
+                c.LinkInfo.Merge(serializedLinkData.JsonDeserialize<LinkInfo>());
             }
 
-            this.Redis.SetEntryInHash("urn:link:data", 
-                this.Link, this.LinkInfo.JsonSerialize());
+            //me.Redis.SetEntryInHash("urn:link:data", 
+            //    me.Link, me.LinkInfo.JsonSerialize());
+            c.Redis.Hash["urn:link:data"][c.Link] = c.LinkInfo.JsonSerialize();
             
-            this.Redis.SetEntryInHash("urn:link:data-last-date-crawl",
-                this.Link, DateTime.Now.ToString());
+            //me.Redis.SetEntryInHash("urn:link:data-last-date-crawl",
+            //    me.Link, DateTime.Now.ToString());
+            c.Redis.Hash["urn:link:data-last-date-crawl"][c.Link] = DateTime.Now.ToString();
 
             // Index date last crawl
-            IRedisHash urnLinkDateLastCrawl = this.Redis.Hashes["urn:link:date-last-crawl"];
-            List<string> dateLastCrawlLinks;
-            if (urnLinkDateLastCrawl.ContainsKey(DateTime.Today.ToString()))
-                dateLastCrawlLinks = urnLinkDateLastCrawl[DateTime.Today.ToString()]
-                    .JsonDeserialize<List<string>>();
-            else
-                dateLastCrawlLinks = new List<string>();
-            if (!dateLastCrawlLinks.Contains(this.Link))
-                dateLastCrawlLinks.Add(this.Link);
-            this.Redis.SetEntryInHash("urn:link:date-last-crawl",
-                DateTime.Today.ToString(), dateLastCrawlLinks.JsonSerialize());
+            //IRedisHash urnLinkDateLastCrawl = me.Redis.Hashes["urn:link:date-last-crawl"];
+            
+            // Seperate redis connection seems to be fixing race conditions
+            using (RedisDataAccessProvider myRedis = new RedisDataAccessProvider())
+            {
+                myRedis.Configuration = c.Redis.Configuration;
+
+                var urnLinkDateLastCrawl = myRedis.Hash["urn:link:date-last-crawl"];
+                List<string> dateLastCrawlLinks = new List<string>();
+                if (urnLinkDateLastCrawl.ContainsKey(DateTime.Today.ToString()))
+                    dateLastCrawlLinks = urnLinkDateLastCrawl[DateTime.Today.ToString()]
+                        .JsonDeserialize<List<string>>();
+                else
+                    dateLastCrawlLinks = new List<string>();
+                if (!dateLastCrawlLinks.Contains(c.Link))
+                    dateLastCrawlLinks.Add(c.Link);
+                //me.Redis.SetEntryInHash("urn:link:date-last-crawl",
+                //    DateTime.Today.ToString(), dateLastCrawlLinks.JsonSerialize());
+                urnLinkDateLastCrawl.Set(DateTime.Today.ToString(), dateLastCrawlLinks.JsonSerialize());
+            }
 
 
-            if (!string.IsNullOrEmpty(this.CurrentBacklink))
+            if (!string.IsNullOrEmpty(c.CurrentBacklink))
             {
                 // Index anchor
-                IRedisHash urnLinkAnchor = this.Redis.Hashes["urn:link:anchor"];
+                //IRedisHash urnLinkAnchor = me.Redis.Hashes["urn:link:anchor"];
+                var urnLinkAnchor = c.Redis.Hash["urn:link:anchor"];
                 List<string> anchorData;
-                if (urnLinkAnchor.ContainsKey(this.LinkInfo.LinkPairID))
-                    anchorData = urnLinkData[this.LinkInfo.LinkPairID]
+                if (urnLinkAnchor.ContainsKey(c.LinkInfo.LinkPairID))
+                    anchorData = urnLinkData[c.LinkInfo.LinkPairID]
                         .JsonDeserialize<List<string>>();
                 else
                     anchorData = new List<string>();
-                if (!anchorData.Contains(this.LinkInfo.AnchorInfo.JsonSerialize()))
+                if (!anchorData.Contains(c.LinkInfo.AnchorInfo.JsonSerialize()))
                 {
-                    anchorData.Add(this.LinkInfo.AnchorInfo.JsonSerialize());
-                    this.Redis.SetEntryInHash("urn:link:anchor",
-                        this.LinkInfo.LinkPairID, anchorData.JsonSerialize());
+                    anchorData.Add(c.LinkInfo.AnchorInfo.JsonSerialize());
+                    //me.Redis.SetEntryInHash("urn:link:anchor",
+                    //    me.LinkInfo.LinkPairID, anchorData.JsonSerialize());
+                    urnLinkAnchor[c.LinkInfo.LinkPairID] = anchorData.JsonSerialize();
                 }
 
-                //Redis.Lists["urn:link:anchor:" + this.LinkInfo.LinkPairID].RemoveValue(this.LinkInfo.AnchorInfo.JsonSerialize());
-                //Redis.Lists["urn:link:anchor:" + this.LinkInfo.LinkPairID].Append(this.LinkInfo.AnchorInfo.JsonSerialize());
+                //Redis.Lists["urn:link:anchor:" + me.LinkInfo.LinkPairID].RemoveValue(me.LinkInfo.AnchorInfo.JsonSerialize());
+                //Redis.Lists["urn:link:anchor:" + me.LinkInfo.LinkPairID].Append(me.LinkInfo.AnchorInfo.JsonSerialize());
 
                 // TODO: Index external backlinks
-                //foreach (string backlink in this.LinkInfo.Backlinks)
+                //foreach (string backlink in me.LinkInfo.Backlinks)
                 //{
-                    //Redis.Lists["urn:backlink-external-link:" + backlink.Replace(':','_')].RemoveValue(this.Link);
-                    //Redis.Lists["urn:backlink-external-link:" + backlink.Replace(':', '_')].Append(this.Link);
+                    //Redis.Lists["urn:backlink-external-link:" + backlink.Replace(':','_')].RemoveValue(me.Link);
+                    //Redis.Lists["urn:backlink-external-link:" + backlink.Replace(':', '_')].Append(me.Link);
                 //}
 
                 // Index backlink count by link
-                this.Redis.SetEntryInHash("urn:link:backlink-count",
-                    this.Link, this.LinkInfo.Backlinks.Count.ToString());
+                //me.Redis.SetEntryInHash("urn:link:backlink-count",
+                //    me.Link, me.LinkInfo.Backlinks.Count.ToString());
+                c.Redis.Hash["urn:link:backlink-count"][c.Link] =
+                    c.LinkInfo.Backlinks.Count.ToString();
             }
 
 
             // Index domain or subdomain
-            IRedisHash urnLinkDomainOrSubdomain = this.Redis.Hashes["urn:link:domain-or-subdomain"];
+            //IRedisHash urnLinkDomainOrSubdomain = me.Redis.Hashes["urn:link:domain-or-subdomain"];
+            var urnLinkDomainOrSubdomain = c.Redis.Hash["urn:link:domain-or-subdomain"];
             List<string> domainOrSubdomainLinks;
-            if (urnLinkDomainOrSubdomain.ContainsKey(this.LinkInfo.DomainOrSubdomain))
-                domainOrSubdomainLinks = urnLinkDomainOrSubdomain[this.LinkInfo.DomainOrSubdomain]
+            if (urnLinkDomainOrSubdomain.ContainsKey(c.LinkInfo.DomainOrSubdomain))
+                domainOrSubdomainLinks = urnLinkDomainOrSubdomain[c.LinkInfo.DomainOrSubdomain]
                     .JsonDeserialize<List<string>>();
             else
                 domainOrSubdomainLinks = new List<string>();
-            if (!domainOrSubdomainLinks.Contains(this.Link))
-                domainOrSubdomainLinks.Add(this.Link);
-            this.Redis.SetEntryInHash("urn:link:domain-or-subdomain",
-                this.LinkInfo.DomainOrSubdomain, domainOrSubdomainLinks.JsonSerialize());
+            if (!domainOrSubdomainLinks.Contains(c.Link))
+                domainOrSubdomainLinks.Add(c.Link);
+            //me.Redis.SetEntryInHash("urn:link:domain-or-subdomain",
+            //    me.LinkInfo.DomainOrSubdomain, domainOrSubdomainLinks.JsonSerialize());
+            urnLinkDomainOrSubdomain[c.LinkInfo.DomainOrSubdomain] =
+                domainOrSubdomainLinks.JsonSerialize();
 
 
             // Index domain
-            IRedisHash urnLinkDomain = this.Redis.Hashes["urn:link:domain"];
+            //IRedisHash urnLinkDomain = me.Redis.Hashes["urn:link:domain"];
+            var urnLinkDomain = c.Redis.Hash["urn:link:domain"];
             List<string> domainLinks;
-            if (urnLinkDomain.ContainsKey(this.LinkInfo.Domain))
-                domainLinks = urnLinkDomain[this.LinkInfo.Domain]
+            if (urnLinkDomain.ContainsKey(c.LinkInfo.Domain))
+                domainLinks = urnLinkDomain[c.LinkInfo.Domain]
                     .JsonDeserialize<List<string>>();
             else
                 domainLinks = new List<string>();
-            if (!domainLinks.Contains(this.Link))
-                domainLinks.Add(this.Link);
-            this.Redis.SetEntryInHash("urn:link:domain",
-                this.LinkInfo.Domain, domainLinks.JsonSerialize());
+            if (!domainLinks.Contains(c.Link))
+                domainLinks.Add(c.Link);
+            //me.Redis.SetEntryInHash("urn:link:domain",
+            //    me.LinkInfo.Domain, domainLinks.JsonSerialize());
+            urnLinkDomain[c.LinkInfo.Domain] = domainLinks.JsonSerialize();
 
-            //Redis.Lists["urn:link:domain-or-subdomain:" + this.LinkInfo.DomainOrSubdomain].RemoveValue(this.Link);
-            //Redis.Lists["urn:link:domain-or-subdomain:" + this.LinkInfo.DomainOrSubdomain].Append(this.Link);
-            //Redis.Lists["urn:link:domain:" + this.LinkInfo.Domain].RemoveValue(this.Link);
-            //Redis.Lists["urn:link:domain:" + this.LinkInfo.Domain].Append(this.Link);
+            //Redis.Lists["urn:link:domain-or-subdomain:" + me.LinkInfo.DomainOrSubdomain].RemoveValue(me.Link);
+            //Redis.Lists["urn:link:domain-or-subdomain:" + me.LinkInfo.DomainOrSubdomain].Append(me.Link);
+            //Redis.Lists["urn:link:domain:" + me.LinkInfo.Domain].RemoveValue(me.Link);
+            //Redis.Lists["urn:link:domain:" + me.LinkInfo.Domain].Append(me.Link);
         }
 
         void CrawlChildLinks()
@@ -185,7 +211,8 @@ namespace LinkSpider3.Process
                 DateCrawled = DateTime.Now, 
                 StatusCode = (int)client.StatusCode 
             };
-            this.Redis.SetEntryInHash("urn:link:status", this.Link, log.JsonSerialize());
+            //this.Redis.SetEntryInHash("urn:link:status", this.Link, log.JsonSerialize());
+            this.Redis.Hash["urn:link:status"][this.Link] = log.JsonSerialize();
 
             
             // Parse the urls
@@ -237,8 +264,13 @@ namespace LinkSpider3.Process
 
                                 if (crawler != null)
                                 {
-                                    this.Redis.RemoveItemFromList("urn:pool", crawler.Link);
-                                    this.Redis.AddItemToList("urn:pool", crawler.Link);
+                                    //this.Redis.RemoveItemFromList("urn:pool", crawler.Link);
+                                    //this.Redis.AddItemToList("urn:pool", crawler.Link);
+                                    this.Redis.List["urn:pool"].Remove(crawler.Link);
+
+                                    if (this.CM.COLLECTOR_DIRECTION == CollectorManager.COLLECTOR_DIRECTION_OLDEST)
+                                        this.Redis.List["urn:pool"].Append(crawler.Link);
+
                                     crawler = null;
                                 }
                             }
@@ -259,8 +291,10 @@ namespace LinkSpider3.Process
             else
             {
                 // Add to the bottom of the pool
-                this.Redis.RemoveItemFromList("urn:pool", this.Link);
-                this.Redis.AddItemToList("urn:pool", this.Link);
+                //this.Redis.RemoveItemFromList("urn:pool", this.Link);
+                //this.Redis.AddItemToList("urn:pool", this.Link);
+                this.Redis.List["urn:pool"].Remove(this.Link);
+                this.Redis.List["urn:pool"].Append(this.Link);
 
                 Thread.Sleep(5000);
                 this.CM.LinksAccessing.Remove(this.Link);
