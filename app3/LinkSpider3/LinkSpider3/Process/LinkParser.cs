@@ -42,6 +42,8 @@ namespace LinkSpider3.Process
                             link = possibleUri.AbsoluteUri;
                             if (link.StartsWith("javascript:"))
                                 link = string.Empty;
+                            if(link.Equals("#"))
+                                link = string.Empty;
                         }
                         else
                         {
