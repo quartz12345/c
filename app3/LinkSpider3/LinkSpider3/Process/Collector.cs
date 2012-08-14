@@ -273,6 +273,12 @@ namespace LinkSpider3.Process
                                     if (this.CM.COLLECTOR_DIRECTION == CollectorManager.COLLECTOR_DIRECTION_OLDEST)
                                         this.Redis.List["urn:pool"].Append(crawler.Link);
 
+                                    List<string> childLinks = this.Redis.Hash["urn:link-child:data"][backlink]
+                                        .JsonDeserialize<List<string>>();
+                                    if (!childLinks.Contains(crawler.Link))
+                                        childLinks.Add(crawler.Link);
+                                    this.Redis.Hash["urn:link-child:data"][backlink] = childLinks.JsonSerialize();
+
                                     crawler = null;
                                 }
                             }
