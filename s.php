@@ -14,6 +14,7 @@
     {
         $_REQUEST['fSearch'] = 'www.articleteller.com';
     }
+	$date = new DateTime('2000-01-01', new DateTimeZone('America/New_York'));
 ?>
 <html>
 <head>
@@ -30,12 +31,18 @@
     <br />
     Total Links Crawled as at: <br />
         <?php
-            for ($i = 0; $i < 5; $i++)
+            for ($i = 0; $i < 10; $i++)
             {
                 $d = time() + (-$i * 24 * 60 * 60);
                 echo date("n/j/Y", $d);
                 echo ": ";
-                echo sizeof(json_decode($redis->hget("urn:link:date-last-crawl", date("n/j/Y 12:00:00 \A\M", $d))));
+                $sizeof = sizeof(json_decode($redis->hget("urn:link:date-last-crawl", date("n/j/Y 12:00:00 \A\M", $d))));
+				echo $sizeof;
+				if($sizeof != 0){
+				$persec = (($sizeof/60)/60);
+				echo " -- ";
+				echo round($persec,0)." links or pages/second";
+				}
                 echo "<br />";
             }
         ?>
