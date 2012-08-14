@@ -14,7 +14,10 @@
     {
         $_REQUEST['fSearch'] = 'www.articleteller.com';
     }
-	$date = new DateTime('2000-01-01', new DateTimeZone('America/New_York'));
+	$tz = new DateTimeZone( 'America/New_York');
+	$now = new DateTime( 'now', $tz); // DateTime object corellated to user's timezone
+	$localtime = $now->format('Y-m-d H:i:s');
+	$localtime = strtotime($localtime);
 ?>
 <html>
 <head>
@@ -33,7 +36,7 @@
         <?php
             for ($i = 0; $i < 10; $i++)
             {
-                $d = time() + (-$i * 24 * 60 * 60);
+                $d = $localtime + (-$i * 24 * 60 * 60);
                 echo date("n/j/Y", $d);
                 echo ": ";
                 $sizeof = sizeof(json_decode($redis->hget("urn:link:date-last-crawl", date("n/j/Y 12:00:00 \A\M", $d))));
