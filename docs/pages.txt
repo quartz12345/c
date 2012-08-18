@@ -1,0 +1,42 @@
+Page 1: List of Backlinks
+	Page URL 									- backlinks
+	PR - Google Page Rank
+	IP Address
+	Link Status 								- if link is 200, 404, etc
+	Target URL 									- the destination of the link
+	Anchor Text
+	OBL 										- count of how many outbound/external links are in the page url
+	Total Links 								- total links of the page including outbound/external links
+	Last Crawl Date
+Page 2: List of Pages
+	Page 										- Internal Pages of the searched domain
+	External Links 								- Count of External Links
+	Referring Domains 							- Number of domains that links to the page
+	Referring IPs 								- Number of IPs that links to the page
+Page 3: List of Anchors
+	Anchor Text 								- List of the anchor texts that backlinks of a domain have
+	Linking Root Domains containing Anchor Text - List of domain/s that uses the anchor text separated by comma
+	Linking IPs containing Anchor Text 			- List of ip/s that uses the anchor text separated by comma
+	Backlink Count Total 						- Total Backlinks that uses the anchor text
+	Sites										- TODO: Sample: # of link/s on # of site/s on # of ip/s
+Page 4: List of Special TLD
+	Domain
+	Tld											- gov,edu,country tlds(us, ph), etc
+	
+	
+-----------
+
+1. search for keyword in domain : so the part before the / - http://sitestatz.com/redis_client/get_url_in_parts_of_url/article
+2. have it so we can do a seperate search for after the / - http://sitestatz.com/redis_client/get_url_in_main_url/article
+3. and a search for anchor text
+4. create a search to display the backlinks ; which is the main function of the site
+
+-----------
+NOTES:
+http://yahooapis.com and 
+http://yahooapis.com/ and 
+http://yahooapis.com/# and 
+http://yahooapis.com/javascript:void(0) 
+should be the same and only http://yahooapis.com/ should be saved.
+
+

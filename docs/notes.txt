@@ -1,0 +1,39 @@
+-------- Searches ---------
+
+This might help, i hope
+http://www.cyberciti.biz/tips/nohup-execute-commands-after-you-exit-from-a-shell-prompt.html 
+- sounds interesting
+http://sshnet.codeplex.com/ 
+- can this be used? just wondering.
+http://wiki.phonicuk.com/Installing-Mono-in-CentOS-5-x.ashx 
+- i searched, mono 2.8 above versions supports NET 4.0, maybe we can try 2.11 or not advisable?
+
+-------- Conditions -------
+dont index this pages if no external links
+about us,
+contact us, 
+privacy policy, 
+disclaimer,
+terms and conditions,
+disclosure
+- check or have a survey on the footer links of the sites if there are additional pages to exclude
+- create and algo of how to exclude the said pages above,
+- also check if google and other search engines like bing,yahoo that links to other sites, if not exclude them
+
+
+----------- From Edu People - just notes :)
+
+Disk Repository with Update Management (DRUM)
+that can store large volumes of arbitrary hashed data on disk and implement very fast check,
+update, and check+update operations using bucket sort.
+
+Spam Tracking and Avoidance through Reputation (STAR)
+dynamically allocates the budget of allowable pages for each domain and all of its
+subdomains in proportion to the number of in-degree links from other domains.
+
+Budget Enforcement with Anti-Spam Tactics (BEAST)
+involves a dynamically increasing number of disk
+queues among which the crawler spreads the URLs based on
+whether they fit within the budget or not.
+
+--------
