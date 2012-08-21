@@ -35,6 +35,7 @@
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel3 = new System.Windows.Forms.ToolStripStatusLabel();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.btnAddUrlToPool = new System.Windows.Forms.Button();
             this.btnLoadCsvToPool = new System.Windows.Forms.Button();
@@ -47,7 +48,6 @@
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.chkCrawlNew = new System.Windows.Forms.CheckBox();
-            this.toolStripStatusLabel3 = new System.Windows.Forms.ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)(this.bsLinksCurrentlyProcessing)).BeginInit();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -93,6 +93,12 @@
             // 
             this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
             this.toolStripStatusLabel2.Size = new System.Drawing.Size(0, 17);
+            // 
+            // toolStripStatusLabel3
+            // 
+            this.toolStripStatusLabel3.Name = "toolStripStatusLabel3";
+            this.toolStripStatusLabel3.Size = new System.Drawing.Size(118, 17);
+            this.toolStripStatusLabel3.Text = "toolStripStatusLabel3";
             // 
             // textBox1
             // 
@@ -205,13 +211,8 @@
             this.chkCrawlNew.TabIndex = 13;
             this.chkCrawlNew.Text = "Crawl New";
             this.chkCrawlNew.UseVisualStyleBackColor = true;
+            this.chkCrawlNew.Visible = false;
             this.chkCrawlNew.CheckedChanged += new System.EventHandler(this.chkCrawlNew_CheckedChanged);
-            // 
-            // toolStripStatusLabel3
-            // 
-            this.toolStripStatusLabel3.Name = "toolStripStatusLabel3";
-            this.toolStripStatusLabel3.Size = new System.Drawing.Size(118, 17);
-            this.toolStripStatusLabel3.Text = "toolStripStatusLabel3";
             // 
             // Form1
             // 
