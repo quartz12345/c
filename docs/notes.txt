@@ -37,3 +37,6 @@ queues among which the crawler spreads the URLs based on
 whether they fit within the budget or not.
 
 --------
+
+only include urls with initials a-z and 0-9
+exclude #, //, or javascript on urls
