@@ -1,0 +1,381 @@
+SEO Magnifier
+
+
+
+Requirements
+    Crawlers (i.e. collectors)
+        ~1M urls per month
+    Database scalability
+    Search engine
+        Different statistics that the user can search
+            e.g. search the domain for how many backlinks it has
+
+
+Questions
+    1. What is the collection rate? 
+        A: Currently, able to crawl 400k unique page (including bad url) in a day but it must have crawled more than that if including counting duplicate pages
+        Note, the crawler is using an inefficient algorithm (can be trapped in self-link sites)
+        Rough estimate must be 4~20k page/min
+        Real benchmarking will be included when an efficient algorithm is implemented
+    2. Can it be increased? and in what way? 
+        A: Can be increased by efficient algorithm, faster bandwidth & better hardware (see #note1)
+        #note1: 
+            One whitepaper, IRLbot claimed: (see http://irl.cs.tamu.edu/people/hsin-tsang/papers/www2008.pdf)
+                Quad CPU AMD 2.6 GHz (16GB, 24-disk RAID-5), 1Gb/s link
+                Running for 41days, able to crawl 7.6B pages with valid HTTP response of 7.4B
+                Centralized crawling
+
+Benchmark
+    Trial 1
+        no rules followed; just plain crawl; only two seed urls http://dir.yahoo.com and http://www.dmoz.org
+        ~12hrs = 45496 unique domains (considered subdomains as separate domain)
+        see https://dl.dropbox.com/u/21289017/domainList.xls
+
+
+Research
+    MajesticSeo.com
+        glossary - http://www.majesticseo.com/support/glossary
+        faq - http://www.majesticseo.com/support/faq
+        uses own search engine; does not rely on other search engine e.g. Google
+        purpose - offer link intelligence and seo metrics
+        metrics - internal & external links
+        fresh index - smaller index; updated daily (target)
+        historic index - historical; updated monthly
+        ACRank - replaced by Flow Metrics
+        crawlers - prioritise visits to most important sites
+        search engine front end - requires to transport large data in 12hrs before it becomes searchable
+        technology - C#/.NET
+        year 2007 - server = 2x quad Xeons, 16 GB RAM, 16 TB disks
+        year 2008 - server = 2x quad Xeons 2.5 Ghz, 32 GB RAM, 24 TB disks
+        a crawler is assigned to a user with peers/nodes
+            http://www.majestic12.co.uk/about.php
+            distributed crawl
+            offers software download to the user to work as a node (called MJ12node)
+    Ahrefs.com
+        https://ahrefs.com/faqs.php
+        crawler can index up to 1.5B pages every 24hrs
+        hardware - own and leased hardware, are also experimenting with clouds
+            overall computing power reaches 8TFLOPS
+        link analysis
+            Quality of data (no garbage, doubles, old deleted links, etc)
+            Update frequency (how quickly changes get into index)
+            Index size
+        index update - every 30mins
+        complete update of all database - the whole Internet backlinks' info refreshing - takes about two months
+        tracks new and lost backlinks
+        prioritise important pages more often
+        reporting filters
+            urls from, backlinks type, pages, subdomains
+            countries, anchors, tld, referring domains, ip, subnets from, date
+            flag = nofollow,image,redirect
+        shows referring pages/domains for anchor phrases & terms
+    SEOmoz
+        <to be filled>
+    Crawling Rules and Algorithms
+        wiep.net - http://wiep.net/link-value-factors/
+        http://stackoverflow.com/questions/8888454/where-to-store-web-crawler-data
+
+
+Data Center
+    Redis
+        Tested
+            Storing urls as hashes for fast retrieval
+            No relational database design, POCO is stored directly
+        Unknowns
+            Complexity of querying from hashes
+            Replication setup
+                Master server - all writes and updates
+                Slave servers - any reads can be performed on any server except master server
+            Sharding
+            ?
+
+
+Data Object
+    The database will be used is a key/value
+    UrlSeen - unique url crawled
+    RobotsCache - list of robots.txt; used to check if UrlSeen is "follow"
+    RobotsRequested - 
+        http://www.robotstxt.org/robotstxt.html
+    DnsCache - 
+
+    class design - https://dl.dropbox.com/u/21289017/linkspider/classes.png
+    bfs flow - https://dl.dropbox.com/u/21289017/linkspider/bfs.png
+    robots flow - https://dl.dropbox.com/u/21289017/linkspider/robots.png
+
+    Sample queries:
+        Total Backlinks = urn:UrlDomainLink['yahoo.com'] -> 
+                          count urn:Url[foreach Link].BackLink
+            Internal links = urn:UrlDomainLink['yahoo.com'] ->
+                             count urn:Url[foreach Link][foreach BackLink].Domain = UrlDomainLink.Domain
+            External links = urn:UrlDomainLink['yahoo.com'] ->
+                             count urn:Url[foreach Link][foreach BackLink].Domain != UrlDomainLink.Domain
+        Referring IPs   = urn:UrlDomainLink['yahoo.com'] -> 
+                          count urn:Url[foreach Link].IPAddresses
+        Referring domains = urn:UrlDomainLink['yahoo.com'] -> 
+                            count urn:Url[foreach Link][foreach BackLink].Link = Url[BackLink].Domain
+            .gov = urn:UrlDomainLink['yahoo.com'] -> 
+                   count urn:Url[foreach Link][foreach BackLink].Tld = '.gov'
+        Backlinks types
+            anchor/text = urn:UrlDomainLink['yahoo.com'] -> 
+                          urn:Url[foreach Link] ->
+                          count urn:UrlAnchor[Url.Link + Url.BackLink].AnchorKind[foreach] = 'anchor'
+
+
+Process Flow
+    Crawler Node loads up
+    Calls Crawler Connect(connect.php) that returns list of Crawler Agents & Publishers
+    Select which agent (agent.php) and publisher (publish.php) to use
+    Call selected agent that returns the list of outstanding base urls on these conditions:
+        All base urls that are not yet assigned to a crawler node
+        All idle base urls for 15mins that are assigned to a crawler node
+        Sorted by DateCrawled ASC (oldest first)
+        FUTURE: Sort by most number of external/internal urls
+    On every "crawl" trigger
+        Loads the base url and loads all external/internal urls and publishes it
+        If external/internal url does not exist
+            Create new record
+        else
+            Update DateCrawled to current date
+    When there are no more queued urls
+        Calls the selected agent again to get the list of outstanding base urls
+    Exclude crawls
+        <meta name="robots" content="noindex,follow" />
+        robots.txt
+
+Crawler Architecture - can be installed by users or dedicated servers
+    Crawler Node (.NET Client, Google/Firefox Extension)
+        request set of urls to crawl from Crawler Agent
+        send crawled data to Crawler Publisher every x minutes
+        if list of urls done
+            request another set of urls
+        built on .NET3.5 / .NET4
+        Crawler Libraries
+            http://htmlagilitypack.codeplex.com/
+            http://www.majestic12.co.uk/projects/html_parser.php
+        Alexa Top 1M urls
+            http://s3.amazonaws.com/alexa-static/top-1m.csv.zip
+        PHP Crawlers
+            http://rield.com/faq/web-robots
+        Page Rank
+            http://leo.saclay.inria.fr/publifiles/gemo/GemoReport-290.pdf
+    Crawler Connect (PHP/ASP.NET)
+        returns a list of agent & publisher urls
+    Crawler Agent (PHP WebService) (3 fallback services on different servers)
+        waits for a request from Crawler Node
+        if request is received
+            compile prioritised urls and send it to Crawler Node
+                where LastVisit is older than 30days (can be done in configuration)
+            flags the downloaded batch with an expected date to finish the crawl
+    Crawler Publisher (PHP WebService) (3 fallback services on different servers)
+        waits for data from Crawler Node
+        if received
+            update index, set LastVisit = current date
+    Crawler Backend
+        PHP / Perl run on dedicated servers
+        Modify to get the set of urls from Crawler Agent instead of getting it directly from the database
+    
+Problems encountered
+    Using a webservice often is getting a timeout
+    MySQL is getting a timeout
+    Alternatives
+        .NET Remoting, Socket Connection, UDP Connection
+        Database = Redis
+            Clustering = http://redis.io/presentation/Redis_Cluster.pdf
+            PHP Client = https://github.com/joelcox/codeigniter-redis
+            .NET Client = http://www.servicestack.net/docs/redis-client/designing-nosql-database
+        Comparison of different databases
+            http://kkovacs.eu/cassandra-vs-mongodb-vs-couchdb-vs-redis/
+
+Search Engine
+    PHP / jQuery / etc.
+    Backlink counter
+    Read records from any of the Slave servers depending on e.g. country, etc.
+        http://seomagnifier.com/search.php
+            if requestor's country = 'AU'
+                connects to Slave01/search.php (using Slave01/mysql)
+            if requestor's country = 'US'
+                connects to Slave02/search.php (using Slave02/mysql)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*** OLD NOTES BELOW ***
+seomoz - if you search a non-indexed page, it shows you how their crawl works
+    Although our index is large, there are a number of reasons why we may not have data 
+    for the page you've requested. These can include: 
+    Recency of Page Creation:
+        Mozscape crawls the web constantly, but we update the index only once every 30-40 days. 
+        Thus, pages and links created since the last index update won't be available until we've seen them. 
+        A typical timeline for getting a page/site included in Mozscape is 45-60 days, 
+        sometimes less for very important or well-linked-to pages. 
+    Deep Down in the Web:
+        Our crawl focuses on a breadth-first approach, and thus we nearly always 
+        have content from the homepage of websites, externally linked-to pages and 
+        pages higher up in a site's information hierarchy. However, deep pages that are 
+        buried beneath many layers of navigation are sometimes missed and it may be several 
+        index updates before we catch all of these. 
+    Blocked Pages:
+        If our crawlers or data sources are blocked from reaching your URLs, 
+        they may not be included in our index (though links that points to those pages will still be available) 
+    No Links:
+     The URLs seen by Mozscape must be linked-to by other documents on the web or our index will not include them.
+ 
+OSE how to crawl
+    http://www.seomoz.org/help/open-site-explorer-faq
+
+metrics
+    http://www.seomoz.org/help/ose-terms-metrics
+
+database clustering/in-memory options
+    MySQL Proxy
+        https://launchpad.net/mysql-proxy
+        http://php.net/manual/en/mysqlnd.plugin.mysql-proxy.php
+        http://www.slideshare.net/nixnutz/the-mysqlnd-replication-and-load-balancing-plugin
+    MySQL clustering
+        http://www.clusterdb.com/mysql-cluster/how-can-a-database-be-in-memory-and-durable-at-the-same-time/
+        Scalability - bots to enter into
+        High-Availability - search to look into
+        Durability - maintenance to add partitions without taking the database offline
+    in-memory data grid options
+        http://highscalability.com/blog/2011/12/21/in-memory-data-grid-technologies.html
+
+internet search engine ideas
+    http://himmele.blogspot.com/2011/04/build-your-own-internet-search-engine.html
+    http://www.metamend.com/search-engine-bots.html
+    http://natishalom.typepad.com/nati_shaloms_blog/2009/02/writing-your-own-adwards-service.html
+
+getting from url
+    http://davidwalsh.name/download-urls-content-php-curl
+
+multi-thread/process
+    curl_multi
+        http://www.onlineaspect.com/2009/01/26/how-to-use-curl_multi-without-blocking/
+        http://stackoverflow.com/questions/9023406/individual-response-time-using-php-curl-multi
+    use .NET
+        very simple manual crawling - http://jubacs.somee.com/linkspider/publish.htm
+
+table design
+    Website
+        ID                  AUTONUMBER                                  ;PK
+        DomainUrl           VARCHAR(255)                                ;PK
+        DomainLinkedFromUrl VARCHAR(255)                                ;PK
+        Domain              VARCHAR(255)                                ;INDEXED (ALLOW DUPLICATES)
+        DomainLinkedFrom    VARCHAR(255)                                ;INDEXED (ALLOW DUPLICATES)
+        LastVisited         DATETIME
+        PageRank            INT                                         ;0-9
+                                                                        ;must be updated everytime the url is re-indexed
+        ... more fields to add ...
+        Country, IP Address, etc.
+    
+    shard the tables into A-Z,0-9 (just like now)
+        and use mysql proxy to combine them into one
+    
+    get external links
+        SELECT DomainUrl FROM Website WHERE Domain <> DomainLinkedFrom
+    get internal links
+        SELECT DomainUrl FROM Website WHERE Domain = DomainLinkedFrom
+    urls to re-index based on last visit
+        SELECT DomainUrl FROM Website 
+        WHERE DATEDIFF(NOW(), LastVisited) > 30                         ;re-index urls that are 30 days old
+    urls to re-index based on rank
+        SELECT DomainUrl FROM Website WHERE PageRank > 6
+    delete inactive/status=500 urls
+
+flow
+                url                 linked from
+    bot
+        crawl www.site1.com
+            found www.site2.com & www.site3.com
+            store as if not indexed
+                www.site2.com       www.site1.com
+                www.site3.com       www.site1.com
+        crawl www.site2.com                                             ;opens a new thread/process
+            found www.site1.com & www.site3.com
+            store as if not indexed
+                www.site1.com       www.site2.com
+                www.site3.com       www.site2.com
+
+bot
+    fed with query statement to take action

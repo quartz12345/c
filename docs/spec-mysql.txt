@@ -1,0 +1,430 @@
+NOTE, USE NOTEPAD2 TO PROPERLY READ THE TEXT BELOW:
+
+
+SEO Magnifier
+
+
+
+Requirements
+    Crawlers (i.e. collectors)
+        ~1M urls per month
+    Database scalability
+    Search engine
+        Different statistics that the user can search
+            e.g. search the domain for how many backlinks it has
+
+
+Resources
+    MajesticSeo.com
+        glossary - http://www.majesticseo.com/support/glossary
+        faq - http://www.majesticseo.com/support/faq
+        uses own search engine; does not rely on other search engine e.g. Google
+        purpose - offer link intelligence and seo metrics
+        metrics - internal & external links
+        fresh index - smaller index; updated daily (target)
+        historic index - historical; updated monthly
+        ACRank - replaced by Flow Metrics
+        crawlers - prioritise visits to most important sites
+        search engine front end - requires to transport large data in 12hrs before it becomes searchable
+        technology - C#/.NET
+        year 2007 - server = 2x quad Xeons, 16 GB RAM, 16 TB disks
+        year 2008 - server = 2x quad Xeons 2.5 Ghz, 32 GB RAM, 24 TB disks
+        a crawler is assigned to a user with peers/nodes
+            http://www.majestic12.co.uk/about.php
+            distributed crawl
+            offers software download to the user to work as a node (called MJ12node)
+    Ahrefs.com
+        https://ahrefs.com/faqs.php
+        crawler can index up to 1.5B pages every 24hrs
+        hardware - own and leased hardware, are also experimenting with clouds
+            overall computing power reaches 8TFLOPS
+        link analysis
+            Quality of data (no garbage, doubles, old deleted links, etc)
+            Update frequency (how quickly changes get into index)
+            Index size
+        index update - every 30mins
+        complete update of all database - the whole Internet backlinks' info refreshing - takes about two months
+        tracks new and lost backlinks
+        prioritise important pages more often
+        reporting filters
+            urls from, backlinks type, pages, subdomains
+            countries, anchors, tld, referring domains, ip, subnets from, date
+            flag = nofollow,image,redirect
+        shows referring pages/domains for anchor phrases & terms
+    SEOmoz
+        <to be filled>
+    Crawling Whitepaper
+        http://irl.cs.tamu.edu/people/hsin-tsang/papers/www2008.pdf
+    wiep.net
+        http://wiep.net/link-value-factors/
+
+Analysis & Proposals
+    Data Center
+        MySQL Data Partitioning
+            Overview - http://dev.mysql.com/tech-resources/articles/partitioning.html
+            Partition Management - http://dev.mysql.com/doc/refman/5.1/en/partitioning-management.html
+            Moving Partitions on different disks
+                http://stackoverflow.com/questions/8820160/partition-table-each-partition-on-different-disk-on-my-hdd
+            MySQL 5.5 Partitioning - http://dev.mysql.com/tech-resources/articles/mysql_55_partitioning.html
+                Partition by alpha, page ranks, country, tld
+        
+            Table Design
+                Url
+                    UrlID               AUTO_INCREMENT
+                    Href                VARCHAR(2048)                   ;absolute uri
+                    Origin              VARCHAR(2048)                   ;absolute uri
+                    DateDiscover        DATETIME
+                    DateCrawled         DATETIME
+                
+                UrlHrefInfo
+                    UrlHrefInfoID       AUTO_INCREMENT
+                    UrlID               INT
+                    HrefRel             VARCHAR(50)                     ;nofollow,me
+                    HrefKind            VARCHAR(15)                     ;anchor <a href="">text</a>
+                                                                        ;frame <frame src="" />
+                                                                        ;iframe <iframe src="" />
+                                                                        ;image <img src="" />
+                                                                        ;link <link href="" />
+                    HrefText            VARCHAR(255)
+                    HrefHost            VARCHAR(50)                     ;e.g. www.example.com, dev.mysql.com
+                    HrefCountry         VARCHAR(50)                     ;ip to country webservice = http://9kgames.com/WS/WSIP2Country.asmx?WSDL
+                    HrefScheme          VARCHAR(15)                     ;http,ftp
+                    HrefPath            VARCHAR(2000)                   ;all words after the domain
+                    HrefQuery           VARCHAR(2000)                   ;all words after '?'
+                
+                UrlHrefIP
+                    UrlHrefIPID         AUTO_INCREMENT
+                    UrlID               INT
+                    IP                  VARCHAR(50)
+                
+                UrlHrefContent
+                    UrlContentID        AUTO_INCREMENT
+                    UrlID               INT
+                    Content             TEXT
+                
+                UrlOrigin
+                    UrlOriginID         AUTO_INCREMENT
+                    UrlID               INT
+                    OriginHost          VARCHAR(50)
+                    OriginCountry       VARCHAR(50)
+                
+                UrlOriginIP
+                    UrlOriginIPID       AUTO_INCREMENT
+                    UrlID               INT
+                    IP                  VARCHAR(50)
+                
+                UrlServed
+                    UrlServedID         AUTO_INCREMENT
+                    UrlID               INT
+                    AppID               INT
+                    DateServed          DATETIME
+            
+            Exclude crawls
+                <meta name="robots" content="noindex,follow" />
+                robots.txt
+            
+            Possible partitions
+                    PARTITION BY LIST(ASCII(SUBSTRING(LOWER(Domain), 1))) (
+                        PARTITION p00 VALUES IN (ASCII('a')),
+                        PARTITION p01 VALUES IN (ASCII('b')),
+                        ...
+                        PARTITION p0N VALUES IN (ASCII('0')),
+                        PARTITION p0N VALUES IN (ASCII('1'))
+                        ...
+                    );
+                    
+                    -or-
+                    
+                    PARTITION BY RANGE COLUMNS(LastVisit) (
+                        PARTITION p0 VALUES LESS THAN ('2012-08-01')
+                            DATA DIRECTORY ="/disk0/data"
+                            INDEX DIRECTORY ="/disk0/idx",
+                        PARTITION p1 VALUES LESS THAN ('2012-09-01')
+                            DATA DIRECTORY ="/disk1/data"
+                            INDEX DIRECTORY ="/disk1/idx",
+                        ...
+                        add more partitions through alter table in the future
+                        PARTITION pN VALUES LESS THAN (MAXVALUE)
+                    );
+                
+        MySQL Replication
+            Master server - all writes and updates
+            Slave servers - any reads can be performed on any server except master server
+            Setup
+                http://dev.mysql.com/doc/refman/5.5/en/replication-howto-newservers.html
+                    always issue FLUSH TABLES WITH READ LOCK before mysqldump & getting master status
+                    SHOW MASTER STATUS - to get the binary log file & position
+                    UNLOCK TABLES - to make it writable
+                http://dev.mysql.com/doc/refman/5.0/en/change-master-to.html
+                    setting the slave must be done through 
+                        CHANGE MASTER TO
+                            MASTER_LOG_FILE='<file>.<nnn>',
+                            MASTER_LOG_POS=NNN;
+            Future possible option - http://dev.mysql.com/doc/refman/5.5/en/replication-semisync.html
+
+            Infrastructure
+                Master MySQL server
+                    consumers: 
+                        Crawler Publisher PHP script (may or may not be on the same server)
+                        Crawler Nodes (may or may not be on the same server; distributed)
+                Slave MySQL server (3 - Slave01, Slave02, Slave03; can easily increase more later)
+                    consumers: 
+                        Crawler Agent PHP script (may or may not be on the same server)
+                        Search engine front-end (may or may not be on the same server)
+                        Crawler Nodes (may or may not be on the same server; distributed)
+
+    Crawler Architecture - can be installed by users or dedicated servers
+        Crawler Node (.NET Client, Google/Firefox Extension)
+            request set of urls to crawl from Crawler Agent
+            send crawled data to Crawler Publisher every x minutes
+            if list of urls done
+                request another set of urls
+            built on .NET3.5 / .NET4
+            Crawler Libraries
+                http://htmlagilitypack.codeplex.com/
+                http://www.majestic12.co.uk/projects/html_parser.php
+            Alexa Top 1M urls
+                http://s3.amazonaws.com/alexa-static/top-1m.csv.zip
+            PHP Crawlers
+                http://rield.com/faq/web-robots
+            Page Rank
+                http://leo.saclay.inria.fr/publifiles/gemo/GemoReport-290.pdf
+        Crawler Connect (PHP/ASP.NET)
+            returns a list of agent & publisher urls
+        Crawler Agent (PHP WebService) (3 fallback services on different servers)
+            waits for a request from Crawler Node
+            if request is received
+                compile prioritised urls and send it to Crawler Node
+                    where LastVisit is older than 30days (can be done in configuration)
+                flags the downloaded batch with an expected date to finish the crawl
+        Crawler Publisher (PHP WebService) (3 fallback services on different servers)
+            waits for data from Crawler Node
+            if received
+                update index, set LastVisit = current date
+        Crawler Backend
+            PHP / Perl run on dedicated servers
+            Modify to get the set of urls from Crawler Agent instead of getting it directly from the database
+        
+        Process Flow
+            Crawler Node loads up
+            Calls Crawler Connect(connect.php) that returns list of Crawler Agents & Publishers
+            Select which agent (agent.php) and publisher (publish.php) to use
+            Call selected agent that returns the list of outstanding base urls on these conditions:
+                All base urls that are not yet assigned to a crawler node
+                All idle base urls for 15mins that are assigned to a crawler node
+                Sorted by DateCrawled ASC (oldest first)
+                FUTURE: Sort by most number of external/internal urls
+            On every "crawl" trigger
+                Loads the base url and loads all external/internal urls and publishes it
+                If external/internal url does not exist
+                    Create new record
+                else
+                    Update DateCrawled to current date
+            When there are no more queued urls
+                Calls the selected agent again to get the list of outstanding base urls
+        
+        Problems encountered
+            Using a webservice often is getting a timeout
+            MySQL is getting a timeout
+            Alternatives
+                .NET Remoting, Socket Connection, UDP Connection
+                Database = Redis
+                    Clustering = http://redis.io/presentation/Redis_Cluster.pdf
+                    PHP Client = https://github.com/joelcox/codeigniter-redis
+                    .NET Client = http://www.servicestack.net/docs/redis-client/designing-nosql-database
+                Comparison of different databases
+                    http://kkovacs.eu/cassandra-vs-mongodb-vs-couchdb-vs-redis/
+
+    Search Engine
+        PHP / jQuery / etc.
+        Backlink counter
+        Read records from any of the Slave servers depending on e.g. country, etc.
+            http://seomagnifier.com/search.php
+                if requestor's country = 'AU'
+                    connects to Slave01/search.php (using Slave01/mysql)
+                if requestor's country = 'US'
+                    connects to Slave02/search.php (using Slave02/mysql)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*** OLD NOTES BELOW ***
+seomoz - if you search a non-indexed page, it shows you how their crawl works
+    Although our index is large, there are a number of reasons why we may not have data 
+    for the page you've requested. These can include: 
+    Recency of Page Creation:
+        Mozscape crawls the web constantly, but we update the index only once every 30-40 days. 
+        Thus, pages and links created since the last index update won't be available until we've seen them. 
+        A typical timeline for getting a page/site included in Mozscape is 45-60 days, 
+        sometimes less for very important or well-linked-to pages. 
+    Deep Down in the Web:
+        Our crawl focuses on a breadth-first approach, and thus we nearly always 
+        have content from the homepage of websites, externally linked-to pages and 
+        pages higher up in a site's information hierarchy. However, deep pages that are 
+        buried beneath many layers of navigation are sometimes missed and it may be several 
+        index updates before we catch all of these. 
+    Blocked Pages:
+        If our crawlers or data sources are blocked from reaching your URLs, 
+        they may not be included in our index (though links that points to those pages will still be available) 
+    No Links:
+     The URLs seen by Mozscape must be linked-to by other documents on the web or our index will not include them.
+ 
+OSE how to crawl
+    http://www.seomoz.org/help/open-site-explorer-faq
+
+metrics
+    http://www.seomoz.org/help/ose-terms-metrics
+
+database clustering/in-memory options
+    MySQL Proxy
+        https://launchpad.net/mysql-proxy
+        http://php.net/manual/en/mysqlnd.plugin.mysql-proxy.php
+        http://www.slideshare.net/nixnutz/the-mysqlnd-replication-and-load-balancing-plugin
+    MySQL clustering
+        http://www.clusterdb.com/mysql-cluster/how-can-a-database-be-in-memory-and-durable-at-the-same-time/
+        Scalability - bots to enter into
+        High-Availability - search to look into
+        Durability - maintenance to add partitions without taking the database offline
+    in-memory data grid options
+        http://highscalability.com/blog/2011/12/21/in-memory-data-grid-technologies.html
+
+internet search engine ideas
+    http://himmele.blogspot.com/2011/04/build-your-own-internet-search-engine.html
+    http://www.metamend.com/search-engine-bots.html
+    http://natishalom.typepad.com/nati_shaloms_blog/2009/02/writing-your-own-adwards-service.html
+
+getting from url
+    http://davidwalsh.name/download-urls-content-php-curl
+
+multi-thread/process
+    curl_multi
+        http://www.onlineaspect.com/2009/01/26/how-to-use-curl_multi-without-blocking/
+        http://stackoverflow.com/questions/9023406/individual-response-time-using-php-curl-multi
+    use .NET
+        very simple manual crawling - http://jubacs.somee.com/linkspider/publish.htm
+
+table design
+    Website
+        ID                  AUTONUMBER                                  ;PK
+        DomainUrl           VARCHAR(255)                                ;PK
+        DomainLinkedFromUrl VARCHAR(255)                                ;PK
+        Domain              VARCHAR(255)                                ;INDEXED (ALLOW DUPLICATES)
+        DomainLinkedFrom    VARCHAR(255)                                ;INDEXED (ALLOW DUPLICATES)
+        LastVisited         DATETIME
+        PageRank            INT                                         ;0-9
+                                                                        ;must be updated everytime the url is re-indexed
+        ... more fields to add ...
+        Country, IP Address, etc.
+    
+    shard the tables into A-Z,0-9 (just like now)
+        and use mysql proxy to combine them into one
+    
+    get external links
+        SELECT DomainUrl FROM Website WHERE Domain <> DomainLinkedFrom
+    get internal links
+        SELECT DomainUrl FROM Website WHERE Domain = DomainLinkedFrom
+    urls to re-index based on last visit
+        SELECT DomainUrl FROM Website 
+        WHERE DATEDIFF(NOW(), LastVisited) > 30                         ;re-index urls that are 30 days old
+    urls to re-index based on rank
+        SELECT DomainUrl FROM Website WHERE PageRank > 6
+    delete inactive/status=500 urls
+
+flow
+                url                 linked from
+    bot
+        crawl www.site1.com
+            found www.site2.com & www.site3.com
+            store as if not indexed
+                www.site2.com       www.site1.com
+                www.site3.com       www.site1.com
+        crawl www.site2.com                                             ;opens a new thread/process
+            found www.site1.com & www.site3.com
+            store as if not indexed
+                www.site1.com       www.site2.com
+                www.site3.com       www.site2.com
+
+bot
+    fed with query statement to take action
