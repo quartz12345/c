@@ -1,0 +1,24 @@
+File: HtmlProcessor.cs
+Line: 41
+Error: FatalExecutionEngineError was detected
+Description:
+The runtime has encountered a fatal error. The address of the error was at 0x6508bdfc, on thread 0x1494. 
+The error code is 0xc0000005. This error may be a bug in the CLR or in the unsafe or non-verifiable portions of user code. 
+Common sources of this bug include user marshaling errors for COM-interop or PInvoke, which may corrupt the stack.
+
+-----------------
+
+File: CollectorPool.cs
+Line: 51
+
+And
+
+File: HtmlProcessor.cs
+Line: 41
+
+
+Error: NullReferenceException was unhandled by user code
+Description: Object reference not set to an instance of an object.
+
+-----------------
+
