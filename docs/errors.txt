@@ -22,3 +22,10 @@ Description: Object reference not set to an instance of an object.
 
 -----------------
 
+UrlExtensions.cs
+Line: 23
+Error: UriFormatException was unhandled by user code
+Description: Invalid URI: The hostname could not be parsed.
+More: >	linkspider3_console.exe!LinkSpider3.Process2.Extensions.UrlExtensions.NormalizeUri(string url, string baseUrl) Line 23 + 0x21 bytes	C#
+
+
