@@ -85,7 +85,11 @@
     <Compile Include="ApplicationInfo.cs" />
     <Compile Include="Process2\CollectorPool.cs" />
     <Compile Include="Process2\Core\DisposableBase.cs" />
+    <Compile Include="Process2\Data\AnchorData.cs" />
+    <Compile Include="Process2\Data\AnchorDataLinkTextRelation.cs" />
     <Compile Include="Process2\Data\LinkData.cs" />
+    <Compile Include="Process2\Data\LinkDate.cs" />
+    <Compile Include="Process2\Data\LinkStatus.cs" />
     <Compile Include="Process2\Data\Repository.cs" />
     <Compile Include="Process2\DnsResolver.cs" />
     <Compile Include="Process2\Extensions\ObjectExtensions.cs" />
@@ -97,6 +101,7 @@
     <Compile Include="Process2\Persistence\RedisPersistence.cs" />
     <Compile Include="Process2\RobotService.cs" />
     <Compile Include="Process2\TldParser.cs" />
+    <Compile Include="Process2\Utils\IP.cs" />
     <Compile Include="Process2\Utils\RabinFingerPrint.cs" />
     <Compile Include="Process2\VisitedDomainHistory.cs" />
     <Compile Include="Process2\VisitedUrlHistory.cs" />

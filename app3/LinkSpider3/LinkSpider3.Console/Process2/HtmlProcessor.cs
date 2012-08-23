@@ -40,6 +40,7 @@ namespace LinkSpider3.Process2
             HtmlDocument doc = new HtmlDocument();
             doc.Load(this.stream);
 
+            string title = doc.DocumentNode.SelectSingleNode("//title").InnerText;
             HtmlNodeCollection anchors = doc.DocumentNode.SelectNodes("//a[@href]");
 
             if (anchors.IsNull())
@@ -56,7 +57,8 @@ namespace LinkSpider3.Process2
                         Href = anchor.Attributes["href"].Value.NormalizeUri(this.baseUrl),
                         AnchorKind = "anchor",
                         AnchorRel = anchor.GetAttributeValue("rel", "dofollow"),
-                        AnchorText = anchor.InnerText
+                        AnchorText = (anchor.InnerText.IsNullOrEmpty() ? "<no text>" : anchor.InnerText),
+                        Title = title
                     })
                 .Distinct()
                 .ToList();
@@ -70,7 +72,11 @@ namespace LinkSpider3.Process2
             public string AnchorRel { get; set; }
             public string AnchorKind { get; set; }
             public string Domain { get; private set;  }
+            public string DomainOrSubdomain { get; private set; }
+            public string DomainScheme { get; private set; }
             public string Tld { get; private set; }
+            public string Title { get; set; }
+            public int Status { get; set; }
 
             private string href;
             public string Href 
@@ -81,9 +87,17 @@ namespace LinkSpider3.Process2
                     href = value;
                     
                     Uri uri = href.ToUri();
+                    if (uri == null)
+                        throw new ArgumentException("LinkInfo.Href is passed with an invalid url.");
                     
-                    Domain = uri.Host;
-                    Tld = this.tldParser.GetTld(Domain);
+                    DomainScheme = uri.Scheme;
+                    DomainOrSubdomain = uri.Host;
+                    Tld = this.tldParser.GetTld(uri.Host);
+
+                    // Get the correct domain
+                    string hostNoTld = uri.Host.Remove(uri.Host.Length - (Tld.Length + 1));
+                    int lastDot = hostNoTld.LastIndexOf('.');
+                    Domain = hostNoTld.Substring(lastDot + 1) + "." + Tld;
                 }
             }
 
@@ -108,7 +122,7 @@ namespace LinkSpider3.Process2
             }
 
             private TldParser tldParser;
-            internal LinkInfo(TldParser tldParser)
+            public LinkInfo(TldParser tldParser)
             {
                 this.tldParser = tldParser;
             }

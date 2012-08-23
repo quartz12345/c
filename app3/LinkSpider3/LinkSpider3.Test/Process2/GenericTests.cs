@@ -58,7 +58,6 @@ namespace LinkSpider3.Test.Process2
             Uri uri = new Uri("http://www.google.com");
 
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
-            request.Timeout = 500;
             request.CookieContainer = new CookieContainer();
             request.Method = "GET";
             using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
@@ -107,6 +106,39 @@ namespace LinkSpider3.Test.Process2
             Assert.IsTrue("google.com".ToUri().ToString() == "http://www.google.com/");
             Assert.IsTrue("www.google.com".ToUri().ToString() == "http://www.google.com/");
             Assert.IsTrue("http://www.google.com".ToUri().ToString() == "http://www.google.com/");
+            Assert.IsTrue("javascript:".ToUri() == null);
+            Assert.IsTrue("mailto:".ToUri() == null);
+            Assert.IsTrue("#".ToUri() == null);
+            Assert.IsTrue("//".ToUri() == null);
+            Assert.IsTrue("google.com/#".ToUri() == null);
+            Assert.IsTrue("www.google.com/#".ToUri() == null);
+            Assert.IsTrue("http://www.google.com/#".ToUri() == null);
+            Assert.IsTrue("google.com/#12345".ToUri() == null);
+            Assert.IsTrue("www.google.com/#12345".ToUri() == null);
+            Assert.IsTrue("http://www.google.com/#12345".ToUri() == null);
+            Assert.IsTrue("192.168.10.1/hello.aspx".ToUri().ToString() == "http://192.168.10.1/hello.aspx");
+            Assert.IsTrue("http://192.168.10.1/hello.aspx".ToUri() == null);
+            Assert.IsTrue("https://192.168.10.1/hello.aspx".ToUri() == null);
+        }
+
+
+        [TestMethod]
+        public void HtmlProcessor_LinkInfo_Check()
+        {
+            TldParser parser = new TldParser();
+            
+            HtmlProcessor.LinkInfo li = new HtmlProcessor.LinkInfo(parser);
+            li.Href = "google.com";
+            Assert.IsTrue(li.Domain == "google.com");
+            Assert.IsTrue(li.DomainOrSubdomain == "www.google.com");
+            Assert.IsTrue(li.DomainScheme == "http");
+            Assert.IsTrue(li.Tld == "com");
+
+            li.Href = "jubacs.somee.net.ph";
+            Assert.IsTrue(li.Domain == "somee.net.ph");
+            Assert.IsTrue(li.DomainOrSubdomain == "www.jubacs.somee.net.ph");
+            Assert.IsTrue(li.DomainScheme == "http");
+            Assert.IsTrue(li.Tld == "net.ph");
         }
     }
 }

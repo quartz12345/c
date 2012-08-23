@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Collections.Concurrent;
+using System.Threading.Tasks;
 
 using TeamDev.Redis;
 
@@ -36,14 +37,17 @@ namespace LinkSpider3.Process2.Persistence
             else if (typeof(T).Equals(typeof(ConcurrentDictionary<string, LinkData>)))
             {
                 ConcurrentDictionary<string, LinkData> links =
-                    new ConcurrentDictionary<string, LinkData>(10, this.redis.Hash["urn:link:data"].Lenght);
+                    new ConcurrentDictionary<string, LinkData>(100, this.redis.Hash["urn:link:data"].Lenght);
                 
-                Array.ForEach(this.redis.Hash["urn:link:data"].Values,
+                Parallel.ForEach<string>(this.redis.Hash["urn:link:data"].Values,
                     ld =>
                     {
                         LinkData ldObj = ld.JsonDeserialize<LinkData>();
                         links.AddOrUpdate(ldObj.Link, ldObj,
-                            (link, oldLdObj) => { return oldLdObj; });
+                            (link, oldLdObj) => 
+                            { 
+                                return oldLdObj; 
+                            });
                     });
                 
                 return links;
@@ -61,6 +65,16 @@ namespace LinkSpider3.Process2.Persistence
         {
             this.redis.Close();
             this.redis.Dispose();
+        }
+
+
+        public bool Ping()
+        {
+            //TODO: Does not work if redis is not running, what's the use?
+            //int result = this.redis.SendCommand(RedisCommand.PING);
+            //return (result > 0);
+
+            return true;
         }
     }
 }

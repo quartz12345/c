@@ -9,5 +9,6 @@ namespace LinkSpider3.Process2.Persistence
     {
         object Load<T>(IDictionary<string, object> properties);
         void Save<T>(T o, IDictionary<string, object> properties);
+        bool Ping();
     }
 }

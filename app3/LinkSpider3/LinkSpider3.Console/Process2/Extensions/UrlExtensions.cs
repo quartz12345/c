@@ -23,32 +23,52 @@ namespace LinkSpider3.Process2.Extensions
                     return new Uri(absoluteBaseUrl, url).ToString();
                 }
 
-                return new Uri(url, UriKind.Relative).ToString();
+                Uri uri = new Uri(url, UriKind.Relative);
+                
+                if (uri.OriginalString == "//")
+                    return null;
+                
+                return uri.ToString();
             }
 
             if (Uri.IsWellFormedUriString(url, UriKind.Absolute))
             {
                 // Only handle same schema as base uri
-                Uri baseUri = new Uri(baseUrl);
                 Uri uri = new Uri(url);
 
-                bool schemaMatch;
+                if (Uri.CheckSchemeName(uri.Scheme) &&
+                    uri.Scheme.ToLowerInvariant() != "javascript" &&
+                    uri.Scheme.ToLowerInvariant() != "mailto" &&
+                    uri.Fragment.IsNullOrEmpty() &&
+                    Uri.CheckHostName(uri.Host) == UriHostNameType.Dns)
+                {
+                    if (baseUrl.IsNullOrEmpty())
+                    {
+                        return uri.ToString();
+                    }
+                    else
+                    {
+                        Uri baseUri = new Uri(baseUrl);
 
-                // Special case for http/https
-                if ((baseUri.Scheme == Uri.UriSchemeHttp) ||
-                    (baseUri.Scheme == Uri.UriSchemeHttps))
-                {
-                    schemaMatch = string.Compare(Uri.UriSchemeHttp, uri.Scheme, StringComparison.OrdinalIgnoreCase) == 0 ||
-                        string.Compare(Uri.UriSchemeHttps, uri.Scheme, StringComparison.OrdinalIgnoreCase) == 0;
-                }
-                else
-                {
-                    schemaMatch = string.Compare(baseUri.Scheme, uri.Scheme, StringComparison.OrdinalIgnoreCase) == 0;
-                }
+                        bool schemaMatch;
 
-                if (schemaMatch)
-                {
-                    return new Uri(url, UriKind.Absolute).ToString();
+                        // Special case for http/https
+                        if ((baseUri.Scheme == Uri.UriSchemeHttp) ||
+                            (baseUri.Scheme == Uri.UriSchemeHttps))
+                        {
+                            schemaMatch = string.Compare(Uri.UriSchemeHttp, uri.Scheme, StringComparison.OrdinalIgnoreCase) == 0 ||
+                                string.Compare(Uri.UriSchemeHttps, uri.Scheme, StringComparison.OrdinalIgnoreCase) == 0;
+                        }
+                        else
+                        {
+                            schemaMatch = string.Compare(baseUri.Scheme, uri.Scheme, StringComparison.OrdinalIgnoreCase) == 0;
+                        }
+
+                        if (schemaMatch)
+                        {
+                            return new Uri(url, UriKind.Absolute).ToString();
+                        }
+                    }
                 }
             }
 
@@ -62,19 +82,30 @@ namespace LinkSpider3.Process2.Extensions
 
         public static Uri ToUri(this string url)
         {
-            if (url.StartsWith("http://www.") ||
-                url.StartsWith("https://www.") ||
-                url.StartsWith("http://") ||
-                url.StartsWith("https://"))
+            string verifiedUrl = url.NormalizeUri(string.Empty);
+            if (verifiedUrl.IsNullOrEmpty())
+                return null;
+            else
             {
-                return new Uri(url);
-            }
+                if (url.StartsWith("http://www.") ||
+                    url.StartsWith("https://www.") ||
+                    url.StartsWith("http://") ||
+                    url.StartsWith("https://"))
+                {
+                    return new Uri(url);
+                }
 
-            UriBuilder b = new UriBuilder(url);
-            b.Scheme = Uri.UriSchemeHttp;
-            if (!b.Host.StartsWith("www."))
-                b.Host = "www." + b.Host;
-            return b.Uri;
+                UriBuilder b = new UriBuilder(url);
+                b.Scheme = Uri.UriSchemeHttp;
+
+                if (Uri.CheckHostName(b.Host) == UriHostNameType.Dns)
+                {
+                    if (!b.Host.StartsWith("www."))
+                        b.Host = "www." + b.Host;
+                }
+
+                return b.Uri;
+            }
         }
 
         public static string ToUriShort(this Uri uri)

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.IO;
 
 using LinkSpider3.Process2;
 using LinkSpider3.Process2.Data;
@@ -42,6 +43,7 @@ namespace LinkSpider3
 
         //static ManualResetEvent allDone = new ManualResetEvent(false);
         const int WORK_AREA_TOP = 3;
+        static StringBuilder LogBuffer;
 
         static void Main(string[] args)
         {
@@ -54,7 +56,9 @@ namespace LinkSpider3
             // --uid=
             // --pwd=
             // --parallel-count
-            
+
+            LogBuffer = new StringBuilder();
+
             int parallelCount = 15;
             string provider = "redis";
             string server = "127.0.0.1";
@@ -63,8 +67,8 @@ namespace LinkSpider3
             Console.CancelKeyPress += new ConsoleCancelEventHandler(Console_CancelKeyPress);
             PrintAndClearHeaderArea();
 
-            Console.WriteLine("Buffer width: " + Console.BufferWidth);
-            Console.WriteLine("Buffer height: " + Console.BufferHeight);
+            LogLine("Buffer width: " + Console.BufferWidth);
+            LogLine("Buffer height: " + Console.BufferHeight);
 
             IPersistence persistence =
                 PersistenceFactory.GetPersistence(provider, 
@@ -73,6 +77,12 @@ namespace LinkSpider3
                         { "server", server },
                         { "port", port }
                     });
+            
+            if (!persistence.Ping())
+            {
+                LogLine("Unable to connect to the database. Aborting.");
+                Environment.Exit(1);
+            }
 
             Repository repository = new Repository(persistence);
 
@@ -83,32 +93,30 @@ namespace LinkSpider3
 
 
             int poolCount = 0;
-            Console.Write("Loading pool...");
+            Log("Loading pool...");
             repository.Load(out pool);
             poolCount = pool.Count;
-            Console.WriteLine("done. Found " + poolCount);
-            pool.Store("jubacs.somee.com");
+            LogLine("done. Found " + poolCount);
 
-            Console.Write("Loading link data...");
-            repository.LoadLinks();
-            Console.WriteLine("done. Found " + repository.Links.Count);
+            Log("Loading link data...");
+            repository.LoadData();
+            LogLine("done. Found " + repository.Links.Count);
 
-            Console.Write("Loading history...");
+            Log("Loading history...");
             repository.Load(out history, DateTime.Today);
-            Console.WriteLine("done");
+            LogLine("done");
 
-            Console.Write("Loading TLD parser...");
+            Log("Loading TLD parser...");
             TldParser tldParser = new TldParser();
-            Console.WriteLine("done");
+            LogLine("done");
             
 
-            Thread.Sleep(10000);
+            Thread.Sleep(5000);
             PrintAndClearHeaderArea();
 
-            //TestRun1(WORK_AREA_TOP, parallelCount, repository, robots, pool, history, tldParser);
 
-            //SynchronizationContext context = new SynchronizationContext();
-            //TaskScheduler scheduler = TaskScheduler.FromCurrentSynchronizationContext();
+            SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
+            TaskScheduler scheduler = TaskScheduler.FromCurrentSynchronizationContext();
 
             DateTime elapsed = DateTime.Now;
             CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
@@ -132,8 +140,8 @@ namespace LinkSpider3
                 state.CollectorID = i;
 
                 tasks[i] = new Task(CollectorProcessor, state, cancelToken);
-                //tasks[i].Start(scheduler);
-                tasks[i].Start();
+                tasks[i].Start(scheduler);
+                //tasks[i].Start();
             }
 
 
@@ -157,26 +165,42 @@ namespace LinkSpider3
             }
             catch
             {
-                Console.WriteLine("Collectors cancelled.");
+                LogLine("Collectors cancelled.");
             }
             Thread.Sleep(3000);
            // countdown.Dispose();
 
 
+
             PrintAndClearHeaderArea();
-            Console.WriteLine("Closing database...");
+            LogLine("Closing database...");
             ((IDisposable)persistence).Dispose();
 
-            Thread.Sleep(3000);
 
+            // Print statistics
+            LogLine("Pool count: before = {0} now = {1}", poolCount, pool.Count);
+            int totalChildLinks = 0;
+            Array.ForEach(repository.Links.ToArray(), 
+                ld => 
+                {
+                    if (ld.Value.IsDirty)
+                        totalChildLinks += ld.Value.NewChildLinks.Count;
+                });
 
-            int total = 0;
-            Array.ForEach(repository.Links.ToArray(), ld => { total += ld.Value.ChildLinks.Count; });
-            Console.WriteLine("Pool count: before = {0} now = {1}", poolCount, pool.Count);
-            Console.WriteLine("Links crawled: {0} in {1} seconds ({2}/sec)",
-                repository.Links.Count + total, (DateTime.Now - elapsed).Seconds, 
-                (repository.Links.Count + total) / (DateTime.Now - elapsed).Seconds);
-            Thread.Sleep(20000);
+            int totalLinks = 0;
+            totalLinks = repository.Links.Where(
+                kvp =>
+                {
+                    return kvp.Value.IsDirty;
+                }).Count();
+
+            
+            LogLine("Links crawled: {0} in {1} seconds ({2}/sec)",
+                totalLinks + totalChildLinks, (DateTime.Now - elapsed).Seconds,
+                (totalLinks + totalChildLinks) / (DateTime.Now - elapsed).Seconds);
+
+            // Write log to file
+            SaveLog();
 
             Environment.Exit(0);
         }
@@ -209,50 +233,60 @@ namespace LinkSpider3
 
 
                 Uri uri = link.ToUri();
-                progress.Message = string.Format("{0} (fetching)", uri);
-                state.ProgressHandler(progress);
 
-                WebDownloader web = new WebDownloader(uri, properties,
-                    ea =>
-                    {
-                        progress.Message = string.Format(
-                            "{0} [{1}] ({2})",
-                            uri.ToUriShort(), ea.Status,
-                            (ea.Exception.IsNull() ?
-                                "responded: " + ea.Stream.Length + " bytes" :
-                                "exception: " + ea.Exception.Message));
-                        state.ProgressHandler(progress);
-                        Thread.Sleep(2000);
+                if (uri != null)
+                {
+                    progress.Message = string.Format("{0} (fetching)", uri);
+                    state.ProgressHandler(progress);
 
-                        if (ea.Stream.IsNull())
+                    WebDownloader web = new WebDownloader(uri, properties,
+                        ea =>
                         {
-                            Thread.Sleep(5000);
-                        }
-                        else
-                        {
-                            HtmlProcessor processor = new HtmlProcessor(
-                                uri.ToString(), ea.Stream,
-                                ((TldParser)ea.Properties["TldParser"]));
-
-
                             progress.Message = string.Format(
-                                "{0} (found={1})", uri, processor.Links.Count);
+                                "{0} [{1}] ({2})",
+                                uri.ToUriShort(), ea.Status,
+                                (ea.Exception.IsNull() ?
+                                    "responded: " + ea.Stream.Length + " bytes" :
+                                    "exception: " + ea.Exception.Message));
                             state.ProgressHandler(progress);
-                            Thread.Sleep(2000);
+                            //Thread.Sleep(2000);
 
-                            int pushedLinks = 0;
-                            int linkCounter = 1;
-                            processor.Links.ForEach(l =>
+                            if (ea.Stream.IsNull())
                             {
-                                progress.Message = string.Format(
-                                    "{0} (processing={1} of {2})",
-                                    uri,
-                                    linkCounter,
-                                    processor.Links.Count);
-                                state.ProgressHandler(progress);
+                                state.Repository.SaveLink(uri.ToString(), string.Empty, string.Empty, new HtmlProcessor.LinkInfo(
+                                    ((TldParser)ea.Properties["TldParser"]))
+                                {
+                                    Href = uri.ToString(),
+                                    Status = (int)ea.Status
+                                });
+                                    
+                                //Thread.Sleep(5000);
+                            }
+                            else
+                            {
+                                HtmlProcessor processor = new HtmlProcessor(
+                                    uri.ToString(), ea.Stream,
+                                    ((TldParser)ea.Properties["TldParser"]));
 
-                                //if (state.Robots.IsAllowed(string.Empty, l.Href.ToUri()))
-                                //{
+
+                                progress.Message = string.Format(
+                                    "{0} (found={1})", uri, processor.Links.Count);
+                                state.ProgressHandler(progress);
+                                //Thread.Sleep(2000);
+
+                                int pushedLinks = 0;
+                                int linkCounter = 1;
+                                processor.Links.ForEach(l =>
+                                {
+                                    progress.Message = string.Format(
+                                        "{0} (processing={1} of {2})",
+                                        uri,
+                                        linkCounter,
+                                        processor.Links.Count);
+                                    state.ProgressHandler(progress);
+
+                                    //if (state.Robots.IsAllowed(string.Empty, l.Href.ToUri()))
+                                    //{
                                     ++pushedLinks;
                                     state.Pool.Store(l.Href);
 
@@ -261,22 +295,23 @@ namespace LinkSpider3
                                     state.Repository.SaveLink(
                                         l.Href, string.Empty, uri.ToString(), l);
                                     state.History.Add(uri.ToString());
-                                //}
+                                    //}
 
-                                ++linkCounter;
-                            });
+                                    ++linkCounter;
+                                });
 
-                            progress.Message = string.Format("{0} [DONE]", uri);
-                            state.ProgressHandler(progress);
+                                progress.Message = string.Format("{0} [DONE]", uri);
+                                state.ProgressHandler(progress);
 
-                            ea.Stream.Close();
-                        }
+                                ea.Stream.Close();
+                            }
 
-                        ((ManualResetEvent)ea.Properties["State"]).Set();
-                    });
+                            ((ManualResetEvent)ea.Properties["State"]).Set();
+                        });
 
-                web.Download();
-                done.WaitOne();
+                    web.Download();
+                    done.WaitOne();
+                }
 
 
                 // Fetch next link
@@ -433,9 +468,9 @@ namespace LinkSpider3
         private static void PrintAndClearHeaderArea()
         {
             Console.Clear();
-            Console.WriteLine(new string('=', Console.BufferWidth - 1));
-            Console.WriteLine("{0} v{1}", ApplicationInfo.Title, ApplicationInfo.Version.ToString());
-            Console.WriteLine(new string('=', Console.BufferWidth - 1));
+            LogLine(new string('=', Console.BufferWidth - 1));
+            LogLine("{0} v{1}", ApplicationInfo.Title, ApplicationInfo.Version.ToString());
+            LogLine(new string('=', Console.BufferWidth - 1));
         }
 
         private static void WriteXY(int x, int y, string format, params object[] args)
@@ -444,6 +479,27 @@ namespace LinkSpider3
             Console.SetCursorPosition(x, y);
             string msg = string.Format(format, args);
             Console.Write(msg.PadRight(Console.BufferWidth - 1, ' '));
+        }
+
+        private static void LogLine(string msg, params object[] arg)
+        {
+            Console.WriteLine(msg, arg);
+            LogBuffer.AppendLine(string.Format(msg, arg));
+        }
+
+        private static void Log(string msg, params object[] arg)
+        {
+            Console.Write(msg, arg);
+            LogBuffer.Append(string.Format(msg, arg));
+        }
+
+        private static void SaveLog()
+        {
+            string exePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            string exeDir = System.IO.Path.GetDirectoryName(exePath);
+            string logPath = System.IO.Path.Combine(exeDir, "linkspider3_console.log");
+            
+            File.WriteAllText(logPath, LogBuffer.ToString());
         }
         #endregion
     }
