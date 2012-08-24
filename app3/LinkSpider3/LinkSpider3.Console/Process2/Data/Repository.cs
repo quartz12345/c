@@ -115,6 +115,7 @@ namespace LinkSpider3.Process2.Data
             if (!backLink.IsNullOrEmpty() && !l.BackLinks.Contains(backLink))
                 l.BackLinks.Add(backLink);
 
+            // Save links
             l = Links.AddOrUpdate(link, l,
                 (key, oldLinkData) =>
                 {
