@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
+using LinkSpider3.Process2.Extensions;
+
 namespace LinkSpider3.Process2
 {
     public class TldParser
@@ -27,9 +29,29 @@ namespace LinkSpider3.Process2
 
         public string GetTld(string host)
         {
-            return TldMozillaList
-                .Where(tld => host.EndsWith(tld))
+            string tld = 
+                TldMozillaList
+                .Where(t => host.EndsWith(t))
                 .FirstOrDefault();
+
+            if (tld.IsNullOrEmpty())
+            {
+                // Excluded in the TldMozillaList
+                if (host.EndsWith(".co.uk"))
+                    return "co.uk";
+                if (host.EndsWith(".com.ve"))
+                    return "com.ve";
+            }
+            else
+            {
+                // Ridiculous occurance
+                if (tld == host)
+                    return string.Empty;
+
+                return tld;
+            }
+
+            return string.Empty;
         }
     }
 }

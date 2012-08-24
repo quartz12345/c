@@ -24,6 +24,35 @@ namespace LinkSpider3.Process2.Utils
             return string.Empty;
         }
 
+        public static string GetIPClassFamily2(string ipAddress)
+        {
+            IPAddressRange range = new IPAddressRange(IPAddress.Parse("0.0.0.0"), IPAddress.Parse("127.255.255.255"));
+            if (range.IsInRange(IPAddress.Parse(ipAddress)))
+            {
+                return "A";
+            }
+            else
+            {
+                range = new IPAddressRange(IPAddress.Parse("128.0.0.0"), IPAddress.Parse("191.255.255.255"));
+                if (range.IsInRange(IPAddress.Parse(ipAddress)))
+                {
+                    return "B";
+                }
+                else
+                {
+                    range = new IPAddressRange(IPAddress.Parse("192.0.0.0"), IPAddress.Parse("223.255.255.255"));
+                    if (range.IsInRange(IPAddress.Parse(ipAddress)))
+                    {
+                        return "C";
+                    }
+                    else
+                    {
+                        return "unknown";
+                    }
+                }
+            }
+        }
+
         public static string GetIPClassFamily(string ipAddress)
         {
             //Reference: http://en.wikipedia.org/wiki/Reserved_IP_addresses
@@ -275,6 +304,51 @@ namespace LinkSpider3.Process2.Utils
             }
 
             return arr2;
+        }
+
+
+
+        private class IPAddressRange
+        {
+            AddressFamily addressFamily;
+            byte[] lowerBytes;
+            byte[] upperBytes;
+
+            public IPAddressRange(IPAddress lower, IPAddress upper)
+            {
+                // Assert that lower.AddressFamily == upper.AddressFamily
+
+                this.addressFamily = lower.AddressFamily;
+                this.lowerBytes = lower.GetAddressBytes();
+                this.upperBytes = upper.GetAddressBytes();
+            }
+
+            public bool IsInRange(IPAddress address)
+            {
+                if (address.AddressFamily != addressFamily)
+                {
+                    return false;
+                }
+
+                byte[] addressBytes = address.GetAddressBytes();
+
+                bool lowerBoundary = true, upperBoundary = true;
+
+                for (int i = 0; i < this.lowerBytes.Length && 
+                    (lowerBoundary || upperBoundary); i++)
+                {
+                    if ((lowerBoundary && addressBytes[i] < lowerBytes[i]) ||
+                        (upperBoundary && addressBytes[i] > upperBytes[i]))
+                    {
+                        return false;
+                    }
+
+                    lowerBoundary &= (addressBytes[i] == lowerBytes[i]);
+                    upperBoundary &= (addressBytes[i] == upperBytes[i]);
+                }
+
+                return true;
+            }
         }
     }
 

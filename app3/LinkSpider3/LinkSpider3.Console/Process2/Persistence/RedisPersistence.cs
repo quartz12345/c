@@ -34,6 +34,7 @@ namespace LinkSpider3.Process2.Persistence
             {
                 return new CollectorPool(this.redis.List["urn:pool"].Values);
             }
+            
             else if (typeof(T).Equals(typeof(ConcurrentDictionary<string, LinkData>)))
             {
                 ConcurrentDictionary<string, LinkData> links =
@@ -53,7 +54,7 @@ namespace LinkSpider3.Process2.Persistence
                 return links;
             }
 
-            return null;
+            return Activator.CreateInstance<T>();
         }
 
         public void Save<T>(T o, IDictionary<string, object> properties)

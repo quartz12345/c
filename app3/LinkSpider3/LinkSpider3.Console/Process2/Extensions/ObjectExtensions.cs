@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Reflection;
+using System.Diagnostics;
 
 namespace LinkSpider3.Process2.Extensions
 {
@@ -87,5 +88,10 @@ namespace LinkSpider3.Process2.Extensions
         //}
 
         #endregion
+
+        public static void DebugPrint(this object o)
+        {
+            Debug.Print((o ?? "Null object").ToString());
+        }
     }
 }

@@ -3,14 +3,16 @@ using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.Net;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+using HtmlAgilityPack;
 
 using LinkSpider3.Process2;
 using LinkSpider3.Process2.Extensions;
-
-using HtmlAgilityPack;
-using System.Net;
-
+using LinkSpider3.Process2.Utils;
+using LinkSpider3.Process2.Persistence;
+using LinkSpider3.Process2.Data;
 
 namespace LinkSpider3.Test.Process2
 {
@@ -119,6 +121,7 @@ namespace LinkSpider3.Test.Process2
             Assert.IsTrue("192.168.10.1/hello.aspx".ToUri().ToString() == "http://192.168.10.1/hello.aspx");
             Assert.IsTrue("http://192.168.10.1/hello.aspx".ToUri() == null);
             Assert.IsTrue("https://192.168.10.1/hello.aspx".ToUri() == null);
+            Assert.IsTrue("http://www.bloggertipsseotricks.com/search/label/blogger tips and tricks".ToUri().ToString() == "http://www.bloggertipsseotricks.com/search/label/blogger tips and tricks");
         }
 
 
@@ -139,6 +142,44 @@ namespace LinkSpider3.Test.Process2
             Assert.IsTrue(li.DomainOrSubdomain == "www.jubacs.somee.net.ph");
             Assert.IsTrue(li.DomainScheme == "http");
             Assert.IsTrue(li.Tld == "net.ph");
+        }
+
+        [TestMethod]
+        public void Utils_IP()
+        {
+            string ip = IP.GetIPAddress("mail.yahoo.com");
+            Assert.IsTrue(ip.Count(c => { return (c == '.'); }) == 3);
+            
+            string ipType = IP.GetIPClassFamily2(ip);
+            // Old poorman's checking of IP class
+            Assert.IsTrue(
+                Convert.ToInt32(ip.Split('.')[0]) <= 127 ? ipType == "A" :
+                Convert.ToInt32(ip.Split('.')[0]) <= 191 ? ipType == "B" :
+                Convert.ToInt32(ip.Split('.')[0]) <= 223 ? ipType == "C" : true);
+        }
+
+        [TestMethod]
+        public void Repository_Check()
+        {
+            RedisPersistence p = new RedisPersistence(new Dictionary<string, string>
+            {
+                { "server", "127.0.0.1" },
+                { "port", "6379" }
+            });
+            
+            Repository r = new Repository(p);
+            r.LoadData();
+
+            Assert.IsNotNull(r.Anchors);
+            Assert.IsNotNull(r.AnchorTextExactRelations);
+            Assert.IsNotNull(r.DomainOrSubdomains);
+            Assert.IsNotNull(r.Domains);
+            Assert.IsNotNull(r.LinkCrawlDateCurrent);
+            Assert.IsNotNull(r.LinkCrawlDateHistory);
+            Assert.IsNotNull(r.LinkRating);
+            Assert.IsNotNull(r.Links);
+            Assert.IsNotNull(r.LinkStatusCurrent);
+            Assert.IsNotNull(r.LinkStatusHistory);
         }
     }
 }

@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Web.Script.Serialization;
+//using System.Web.Script.Serialization;
+using Newtonsoft.Json;
 
 namespace LinkSpider3.Process2.Extensions
 {
@@ -23,26 +24,34 @@ namespace LinkSpider3.Process2.Extensions
 
         public static string JsonSerialize(this object value)
         {
-            JavaScriptSerializer serializer = new JavaScriptSerializer();
+            //JavaScriptSerializer serializer = new JavaScriptSerializer();
             
-            StringBuilder json = new StringBuilder();
-            serializer.Serialize(value, json);
+            //StringBuilder json = new StringBuilder();
+            //serializer.Serialize(value, json);
 
-            return json.ToString();
+            //return json.ToString();
+            return JsonConvert.SerializeObject(value, Formatting.None); 
+        }
+
+        public static string JsonSerialize(this object value, bool formatted)
+        {
+            return JsonConvert.SerializeObject(value, (formatted ? Formatting.Indented : Formatting.None));
         }
 
         public static T JsonDeserialize<T>(this string value)
         {
-            JavaScriptSerializer serializer = new JavaScriptSerializer();
+            //JavaScriptSerializer serializer = new JavaScriptSerializer();
 
-            T o;
-            try
-            {
-                o = serializer.Deserialize<T>(value);
-            }
-            catch { o = Activator.CreateInstance<T>(); }
+            //T o;
+            //try
+            //{
+            //    o = serializer.Deserialize<T>(value);
+            //}
+            //catch { o = Activator.CreateInstance<T>(); }
 
-            return o;
+            //return o;
+
+            return JsonConvert.DeserializeObject<T>(value);
         }
     }
 }

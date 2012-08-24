@@ -15,6 +15,9 @@ namespace LinkSpider3.Process2.Extensions
                 return baseUrl;
             }
 
+            // Escaped the url before checking
+            url = Uri.EscapeUriString(url);
+
             if (Uri.IsWellFormedUriString(url, UriKind.Relative))
             {
                 if (!baseUrl.IsNullOrEmpty())

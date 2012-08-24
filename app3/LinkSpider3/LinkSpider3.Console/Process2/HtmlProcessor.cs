@@ -7,6 +7,7 @@ using System.IO;
 using HtmlAgilityPack;
 
 using LinkSpider3.Process2.Extensions;
+using System.Net;
 
 namespace LinkSpider3.Process2
 {
@@ -38,11 +39,22 @@ namespace LinkSpider3.Process2
 
 
             HtmlDocument doc = new HtmlDocument();
-            doc.Load(this.stream);
+            
+            try
+            {
+                doc.Load(this.stream);
+            }
+            catch (NullReferenceException)
+            {
+                // Ignore error and return with no links
+                Links = new List<LinkInfo>();
+                return;
+            }
 
-            string title = doc.DocumentNode.SelectSingleNode("//title").InnerText;
+            HtmlNode titleNode = doc.DocumentNode.SelectSingleNode("//title");
+            string title = (titleNode.IsNull() ? "<no title>" : titleNode.InnerText);
+
             HtmlNodeCollection anchors = doc.DocumentNode.SelectNodes("//a[@href]");
-
             if (anchors.IsNull())
             {
                 Links = new List<LinkInfo>();
@@ -58,7 +70,8 @@ namespace LinkSpider3.Process2
                         AnchorKind = "anchor",
                         AnchorRel = anchor.GetAttributeValue("rel", "dofollow"),
                         AnchorText = (anchor.InnerText.IsNullOrEmpty() ? "<no text>" : anchor.InnerText),
-                        Title = title
+                        Title = title,
+                        Status = (int)HttpStatusCode.OK 
                     })
                 .Distinct()
                 .ToList();
@@ -95,9 +108,16 @@ namespace LinkSpider3.Process2
                     Tld = this.tldParser.GetTld(uri.Host);
 
                     // Get the correct domain
-                    string hostNoTld = uri.Host.Remove(uri.Host.Length - (Tld.Length + 1));
-                    int lastDot = hostNoTld.LastIndexOf('.');
-                    Domain = hostNoTld.Substring(lastDot + 1) + "." + Tld;
+                    if (Tld.IsNullOrEmpty())
+                    {
+                        Domain = uri.Host;
+                    }
+                    else
+                    {
+                        string hostNoTld = uri.Host.Remove(uri.Host.Length - (Tld.Length + 1));
+                        int lastDot = hostNoTld.LastIndexOf('.');
+                        Domain = hostNoTld.Substring(lastDot + 1) + "." + Tld;
+                    }
                 }
             }
 

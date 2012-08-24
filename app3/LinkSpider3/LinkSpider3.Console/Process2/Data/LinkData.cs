@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Web.Script.Serialization;
 using System.Net;
+
+using Newtonsoft.Json;
 
 namespace LinkSpider3.Process2.Data
 {
@@ -21,10 +22,10 @@ namespace LinkSpider3.Process2.Data
         public string IPType { get; set; }
         public string Title { get; set; }
 
-        [ScriptIgnore]
+        [JsonIgnore]
         public bool IsDirty { get; set; }
 
-        [ScriptIgnore]
+        [JsonIgnore]
         public List<string> NewChildLinks { get; set; }
 
         public LinkData()

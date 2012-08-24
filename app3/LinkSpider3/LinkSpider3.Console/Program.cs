@@ -145,19 +145,11 @@ namespace LinkSpider3
             }
 
 
-            
-
-
-
-
-
-
-
             //allDone.WaitOne();
             WriteXY(0, WORK_AREA_TOP + parallelCount + 2, "press [ENTER] to quit");
             Console.Read();
 
-            cancelTokenSource.Cancel(false);
+            cancelTokenSource.Cancel(true);
             try
             {
                 Task.WaitAll(tasks, cancelToken);
@@ -165,7 +157,7 @@ namespace LinkSpider3
             }
             catch
             {
-                LogLine("Collectors cancelled.");
+                LogLine("Collectors stopped.");
             }
             Thread.Sleep(3000);
            // countdown.Dispose();
@@ -198,6 +190,28 @@ namespace LinkSpider3
             LogLine("Links crawled: {0} in {1} seconds ({2}/sec)",
                 totalLinks + totalChildLinks, (DateTime.Now - elapsed).Seconds,
                 (totalLinks + totalChildLinks) / (DateTime.Now - elapsed).Seconds);
+
+            // Dump data to log
+            LogLine("Anchors");
+            LogLine(repository.Anchors.JsonSerialize(true));
+            LogLine("AnchorTextExactRelations");
+            LogLine(repository.AnchorTextExactRelations.JsonSerialize(true));
+            LogLine("DomainOrSubdomains");
+            LogLine(repository.DomainOrSubdomains.JsonSerialize(true));
+            LogLine("Domains");
+            LogLine(repository.Domains.JsonSerialize(true));
+            LogLine("LinkCrawlDateCurrent");
+            LogLine(repository.LinkCrawlDateCurrent.JsonSerialize(true));
+            LogLine("LinkCrawlDateHistory");
+            LogLine(repository.LinkCrawlDateHistory.JsonSerialize(true));
+            LogLine("LinkRating");
+            LogLine(repository.LinkRating.JsonSerialize(true));
+            LogLine("Links");
+            LogLine(repository.Links.Where((kv) => { return kv.Value.IsDirty; }).JsonSerialize(true));
+            LogLine("LinkStatusCurrent");
+            LogLine(repository.LinkStatusCurrent.JsonSerialize(true));
+            LogLine("LinkStatusHistory");
+            LogLine(repository.LinkStatusHistory.JsonSerialize(true));
 
             // Write log to file
             SaveLog();
@@ -268,7 +282,6 @@ namespace LinkSpider3
                                     uri.ToString(), ea.Stream,
                                     ((TldParser)ea.Properties["TldParser"]));
 
-
                                 progress.Message = string.Format(
                                     "{0} (found={1})", uri, processor.Links.Count);
                                 state.ProgressHandler(progress);
@@ -327,7 +340,7 @@ namespace LinkSpider3
             VisitedDomainHistory domainHistory)
         {
             string link = pool.Next();
-            while (history.ContainsUrl(link.ToUri().ToString()))
+            while (link.ToUri().IsNull() || history.ContainsUrl(link.ToUri().ToString()))
             {
                 link = pool.Next();
             }
@@ -483,8 +496,16 @@ namespace LinkSpider3
 
         private static void LogLine(string msg, params object[] arg)
         {
-            Console.WriteLine(msg, arg);
-            LogBuffer.AppendLine(string.Format(msg, arg));
+            if (arg.Length == 0)
+            {
+                Console.WriteLine(msg);
+                LogBuffer.AppendLine(msg);
+            }
+            else
+            {
+                Console.WriteLine(msg, arg);
+                LogBuffer.AppendLine(string.Format(msg, arg));
+            }
         }
 
         private static void Log(string msg, params object[] arg)

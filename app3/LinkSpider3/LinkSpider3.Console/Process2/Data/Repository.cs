@@ -103,7 +103,7 @@ namespace LinkSpider3.Process2.Data
             l.DomainScheme = linkInfo.DomainScheme;
             l.Tld = linkInfo.Tld;
             l.IP = IP.GetIPAddress(l.DomainOrSubdomain);
-            l.IPType = IP.GetIPClassFamily(l.IP);
+            l.IPType = IP.GetIPClassFamily2(l.IP);
             l.Title = linkInfo.Title;
 
             if (!childLink.IsNullOrEmpty() && !l.ChildLinks.Contains(childLink))
