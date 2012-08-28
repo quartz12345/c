@@ -181,5 +181,13 @@ namespace LinkSpider3.Test.Process2
             Assert.IsNotNull(r.LinkStatusCurrent);
             Assert.IsNotNull(r.LinkStatusHistory);
         }
+
+        [TestMethod]
+        public void ToRF()
+        {
+            //Assert.IsTrue("http://www.articleteller.com/".ToRabinFingerPrint() == 40230);
+            Assert.IsTrue("http://www.articleteller.com".ToCRC32() == 1125708679);
+            Assert.IsTrue("http://www.yahoo.com".ToCRC32() == 416577886);
+        }
     }
 }

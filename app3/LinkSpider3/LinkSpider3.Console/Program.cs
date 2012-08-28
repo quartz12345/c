@@ -59,7 +59,7 @@ namespace LinkSpider3
 
             LogBuffer = new StringBuilder();
 
-            int parallelCount = 15;
+            int parallelCount = 3;
             string provider = "redis";
             string server = "127.0.0.1";
             string port = "6379";
@@ -95,6 +95,9 @@ namespace LinkSpider3
             int poolCount = 0;
             Log("Loading pool...");
             repository.Load(out pool);
+            pool.Store("jubacs.somee.com");
+            pool.Store("dmoz.org");
+            pool.Store("dir.yahoo.com");
             poolCount = pool.Count;
             LogLine("done. Found " + poolCount);
 
@@ -117,6 +120,11 @@ namespace LinkSpider3
 
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
             TaskScheduler scheduler = TaskScheduler.FromCurrentSynchronizationContext();
+            TaskScheduler.UnobservedTaskException += (o, ea) =>
+            {
+                LogLine("Exception: {0}", ea.Exception.Message);
+                ea.SetObserved();
+            };
 
             DateTime elapsed = DateTime.Now;
             CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
@@ -139,7 +147,7 @@ namespace LinkSpider3
                 //state.Countdown = countdown;
                 state.CollectorID = i;
 
-                tasks[i] = new Task(CollectorProcessor, state, cancelToken);
+                tasks[i] = new Task(CollectorProcessor, state, cancelToken, TaskCreationOptions.LongRunning);
                 tasks[i].Start(scheduler);
                 //tasks[i].Start();
             }
@@ -171,25 +179,10 @@ namespace LinkSpider3
 
             // Print statistics
             LogLine("Pool count: before = {0} now = {1}", poolCount, pool.Count);
-            int totalChildLinks = 0;
-            Array.ForEach(repository.Links.ToArray(), 
-                ld => 
-                {
-                    if (ld.Value.IsDirty)
-                        totalChildLinks += ld.Value.NewChildLinks.Count;
-                });
-
-            int totalLinks = 0;
-            totalLinks = repository.Links.ToArray().Where(
-                kvp =>
-                {
-                    return kvp.Value.IsDirty;
-                }).Count();
-
-            
+            int totalLinks = repository.CrawlDateLinks[DateTime.Today.ToString("yyMMdd")].Count;
             LogLine("Links crawled: {0} in {1} seconds ({2}/sec)",
-                totalLinks + totalChildLinks, (DateTime.Now - elapsed).Seconds,
-                (totalLinks + totalChildLinks) / (DateTime.Now - elapsed).Seconds);
+                totalLinks, (DateTime.Now - elapsed).Seconds,
+                (totalLinks) / (DateTime.Now - elapsed).Seconds);
 
             // Dump data to log
             LogLine("Anchors");
@@ -206,8 +199,8 @@ namespace LinkSpider3
             LogLine(repository.LinkCrawlDateHistory.JsonSerialize(true));
             LogLine("LinkRating");
             LogLine(repository.LinkRating.JsonSerialize(true));
-            LogLine("Links");
-            LogLine(repository.Links.ToArray().Where((kv) => { return kv.Value.IsDirty; }).JsonSerialize(true));
+            //LogLine("Links");
+            //LogLine(repository.Links.ToArray().Where((kv) => { return kv.Value.IsDirty; }).JsonSerialize(true));
             LogLine("LinkStatusCurrent");
             LogLine(repository.LinkStatusCurrent.JsonSerialize(true));
             LogLine("LinkStatusHistory");

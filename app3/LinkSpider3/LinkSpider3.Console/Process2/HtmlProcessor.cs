@@ -134,10 +134,10 @@ namespace LinkSpider3.Process2
             {
                 int hash =
                     Convert.ToInt32(
-                        obj.Href.ToRabinFingerPrint() ^
-                        obj.AnchorKind.ToRabinFingerPrint() ^
-                        obj.AnchorRel.ToRabinFingerPrint() ^
-                        obj.AnchorText.ToRabinFingerPrint());
+                        obj.Href.ToHash() ^
+                        obj.AnchorKind.ToHash() ^
+                        obj.AnchorRel.ToHash() ^
+                        obj.AnchorText.ToHash());
                 return hash.GetHashCode();
             }
 

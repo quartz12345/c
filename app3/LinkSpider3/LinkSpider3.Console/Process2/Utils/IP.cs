@@ -26,6 +26,9 @@ namespace LinkSpider3.Process2.Utils
 
         public static string GetIPClassFamily2(string ipAddress)
         {
+            if (string.IsNullOrEmpty(ipAddress))
+                return "unknown";
+
             IPAddressRange range = new IPAddressRange(IPAddress.Parse("0.0.0.0"), IPAddress.Parse("127.255.255.255"));
             if (range.IsInRange(IPAddress.Parse(ipAddress)))
             {

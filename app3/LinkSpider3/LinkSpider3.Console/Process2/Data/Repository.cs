@@ -44,6 +44,9 @@ namespace LinkSpider3.Process2.Data
         //public ConcurrentDictionary<string, List<LinkDate>> LinkCrawlDateHistory;
         public ConcurrentRedisHash<List<LinkDate>> LinkCrawlDateHistory;
 
+        // Saved as urn:crawldate:link
+        public ConcurrentRedisHash<List<string>> CrawlDateLinks;
+
         // Saved as urn:domain:data
         // domain, array of link
         //public ConcurrentDictionary<string, List<string>> Domains;
@@ -97,16 +100,17 @@ namespace LinkSpider3.Process2.Data
             //Anchors = this.persistence.Load<ConcurrentDictionary<string, List<AnchorData>>>(null) as ConcurrentDictionary<string, List<AnchorData>>;
             //AnchorTextExactRelations = this.persistence.Load<ConcurrentDictionary<string, List<AnchorDataLinkTextRelation>>>(null) as ConcurrentDictionary<string, List<AnchorDataLinkTextRelation>>;
 
-            Links = this.persistence.Load<ConcurrentRedisHash<LinkData>>(new Dictionary<string, object> { { "name", "urn:link:data" } }) as ConcurrentRedisHash<LinkData>;
-            LinkStatusCurrent = this.persistence.Load<ConcurrentRedisHash<int>>(new Dictionary<string, object> { { "name", "urn:link:status:current" } }) as ConcurrentRedisHash<int>;
-            LinkStatusHistory = this.persistence.Load<ConcurrentRedisHash<List<LinkStatus>>>(new Dictionary<string, object> { { "name", "urn:link:status:history" } }) as ConcurrentRedisHash<List<LinkStatus>>;
-            LinkRating = this.persistence.Load<ConcurrentRedisHash<int>>(new Dictionary<string, object> { { "name", "urn:link:rating" } }) as ConcurrentRedisHash<int>;
-            LinkCrawlDateCurrent = this.persistence.Load<ConcurrentRedisHash<LinkDate>>(new Dictionary<string, object> { { "name", "urn:link:crawldate:current" } }) as ConcurrentRedisHash<LinkDate>;
-            LinkCrawlDateHistory = this.persistence.Load<ConcurrentRedisHash<List<LinkDate>>>(new Dictionary<string, object> { { "name", "urn:link:crawldate:history" } }) as ConcurrentRedisHash<List<LinkDate>>;
-            Domains = this.persistence.Load<ConcurrentRedisHash<List<string>>>(new Dictionary<string, object> { { "name", "urn:domain:data" } }) as ConcurrentRedisHash<List<string>>;
-            DomainOrSubdomains = this.persistence.Load<ConcurrentRedisHash<List<string>>>(new Dictionary<string, object> { { "name", "urn:domainorsubdomain:data" } }) as ConcurrentRedisHash<List<string>>;
-            Anchors = this.persistence.Load<ConcurrentRedisHash<List<AnchorData>>>(new Dictionary<string, object> { { "name", "urn:anchor:data" } }) as ConcurrentRedisHash<List<AnchorData>>;
-            AnchorTextExactRelations = this.persistence.Load<ConcurrentRedisHash<List<AnchorDataLinkTextRelation>>>(new Dictionary<string, object> { { "name", "urn:anchor:textexact" } }) as ConcurrentRedisHash<List<AnchorDataLinkTextRelation>>;
+            Links = this.persistence.Load<ConcurrentRedisHash<LinkData>>(new Dictionary<string, object> { { "name", "urn:link:data" }, { "db", 1 } }) as ConcurrentRedisHash<LinkData>;
+            LinkStatusCurrent = this.persistence.Load<ConcurrentRedisHash<int>>(new Dictionary<string, object> { { "name", "urn:link:status:current" }, { "db", 2 } }) as ConcurrentRedisHash<int>;
+            LinkStatusHistory = this.persistence.Load<ConcurrentRedisHash<List<LinkStatus>>>(new Dictionary<string, object> { { "name", "urn:link:status:history" }, { "db", 3 } }) as ConcurrentRedisHash<List<LinkStatus>>;
+            LinkRating = this.persistence.Load<ConcurrentRedisHash<int>>(new Dictionary<string, object> { { "name", "urn:link:rating" }, { "db", 4 } }) as ConcurrentRedisHash<int>;
+            LinkCrawlDateCurrent = this.persistence.Load<ConcurrentRedisHash<LinkDate>>(new Dictionary<string, object> { { "name", "urn:link:crawldate:current" }, { "db", 5 } }) as ConcurrentRedisHash<LinkDate>;
+            LinkCrawlDateHistory = this.persistence.Load<ConcurrentRedisHash<List<LinkDate>>>(new Dictionary<string, object> { { "name", "urn:link:crawldate:history" }, { "db", 6 } }) as ConcurrentRedisHash<List<LinkDate>>;
+            CrawlDateLinks = this.persistence.Load<ConcurrentRedisHash<List<string>>>(new Dictionary<string, object> { { "name", "urn:crawldate:link" }, { "db", 7 } }) as ConcurrentRedisHash<List<string>>;
+            Domains = this.persistence.Load<ConcurrentRedisHash<List<string>>>(new Dictionary<string, object> { { "name", "urn:domain:data" }, { "db", 8 } }) as ConcurrentRedisHash<List<string>>;
+            DomainOrSubdomains = this.persistence.Load<ConcurrentRedisHash<List<string>>>(new Dictionary<string, object> { { "name", "urn:domainorsubdomain:data" }, { "db", 9 } }) as ConcurrentRedisHash<List<string>>;
+            Anchors = this.persistence.Load<ConcurrentRedisHash<List<AnchorData>>>(new Dictionary<string, object> { { "name", "urn:anchor:data" }, { "db", 10 } }) as ConcurrentRedisHash<List<AnchorData>>;
+            AnchorTextExactRelations = this.persistence.Load<ConcurrentRedisHash<List<AnchorDataLinkTextRelation>>>(new Dictionary<string, object> { { "name", "urn:anchor:textexact" }, { "db", 11 } }) as ConcurrentRedisHash<List<AnchorDataLinkTextRelation>>;
         }
 
         public void SaveLink(
@@ -118,7 +122,7 @@ namespace LinkSpider3.Process2.Data
             // Save link data
             LinkData l = new LinkData();
             l.IsDirty = true;
-            l.Link_RFID = link.ToRabinFingerPrint().ToString();
+            l.Link_RFID = link.ToHash().ToString();
             l.Link = link;
             l.Domain = linkInfo.Domain;
             l.DomainOrSubdomain = linkInfo.DomainOrSubdomain;
@@ -138,7 +142,7 @@ namespace LinkSpider3.Process2.Data
                 l.BackLinks.Add(backLink);
 
             // Save links
-            l = Links.AddOrUpdate(link, l,
+            l = Links.AddOrUpdate(link.ToHashString(), l,
                 (key, oldLinkData) =>
                 {
                     return oldLinkData.Merge(l);
@@ -146,7 +150,7 @@ namespace LinkSpider3.Process2.Data
 
 
             // Save link status current
-            LinkStatusCurrent.AddOrUpdate(link, linkInfo.Status,
+            LinkStatusCurrent.AddOrUpdate(link.ToHashString(), linkInfo.Status,
                 (key, oldStatus) =>
                 {
                     return linkInfo.Status;
@@ -161,7 +165,7 @@ namespace LinkSpider3.Process2.Data
                 Time = DateTime.Now.ToString("hhmmss"),
                 Status = linkInfo.Status
             };
-            LinkStatusHistory.AddOrUpdate(link, new List<LinkStatus> { linkStatus },
+            LinkStatusHistory.AddOrUpdate(link.ToHashString(), new List<LinkStatus> { linkStatus },
                 (key, oldLinkStatuses) =>
                 {
                     oldLinkStatuses.Add(linkStatus);
@@ -170,7 +174,7 @@ namespace LinkSpider3.Process2.Data
 
             
             // Save link rating
-            LinkRating.AddOrUpdate(link, Links[link].BackLinks.Count,
+            LinkRating.AddOrUpdate(link.ToHashString(), Links[link].BackLinks.Count,
                 (key, oldCount) => { return Links[link].BackLinks.Count; });
 
 
@@ -180,35 +184,45 @@ namespace LinkSpider3.Process2.Data
                 Date = DateTime.Now.ToString("yyMMdd"),
                 Time = DateTime.Now.ToString("hhmmss")
             };
-            LinkCrawlDateCurrent.AddOrUpdate(link, linkDate,
+            LinkCrawlDateCurrent.AddOrUpdate(link.ToHashString(), linkDate,
                 (key, oldLinkDate) => { return linkDate; });
 
 
             // Save link crawl date history
-            LinkCrawlDateHistory.AddOrUpdate(link, new List<LinkDate> { linkDate },
+            LinkCrawlDateHistory.AddOrUpdate(link.ToHashString(), new List<LinkDate> { linkDate },
                 (key, oldLinkDates) =>
                 {
                     oldLinkDates.Add(linkDate);
                     return oldLinkDates;
                 });
 
+            
+            // Crawl date
+            CrawlDateLinks.AddOrUpdate(DateTime.Today.ToString("yyMMdd"), new List<string> { link.ToHashString() },
+                (key, oldList) =>
+                {
+                    if (!oldList.Contains(link.ToHashString()))
+                        oldList.Add(link.ToHashString());
+                    return oldList;
+                });
+
 
             // Domains
-            Domains.AddOrUpdate(l.Domain, new List<string> { l.Link },
+            Domains.AddOrUpdate(l.Domain.ToHashString(), new List<string> { l.Link.ToHashString() },
                 (key, oldLinks) =>
                 {
-                    if (!oldLinks.Contains(l.Link))
-                        oldLinks.Add(l.Link);
+                    if (!oldLinks.Contains(l.Link.ToHashString()))
+                        oldLinks.Add(l.Link.ToHashString());
                     return oldLinks;
                 });
 
 
             // DomainOrSubdomains
-            DomainOrSubdomains.AddOrUpdate(l.DomainOrSubdomain, new List<string> { l.Link },
+            DomainOrSubdomains.AddOrUpdate(l.DomainOrSubdomain.ToHashString(), new List<string> { l.Link.ToHashString() },
                 (key, oldLinks) =>
                 {
-                    if (!oldLinks.Contains(l.Link))
-                        oldLinks.Add(l.Link);
+                    if (!oldLinks.Contains(l.Link.ToHashString()))
+                        oldLinks.Add(l.Link.ToHashString());
                     return oldLinks;
                 });
 
@@ -222,7 +236,7 @@ namespace LinkSpider3.Process2.Data
                     Rel = linkInfo.AnchorRel,
                     Text = linkInfo.AnchorText
                 };
-                Anchors.AddOrUpdate(link.ToRabinFingerPrint() + "_" + childLink.ToRabinFingerPrint(), new List<AnchorData> { anchorData },
+                Anchors.AddOrUpdate(link.ToHash() + "_" + childLink.ToHash(), new List<AnchorData> { anchorData },
                     (key, oldAnchors) =>
                     {
                         if (!oldAnchors.Contains(anchorData))
@@ -231,20 +245,20 @@ namespace LinkSpider3.Process2.Data
                     });
 
                 // AnchorTextExactRelations
-                AnchorDataLinkTextRelation relation = new AnchorDataLinkTextRelation 
+                AnchorDataLinkTextRelation relation = new AnchorDataLinkTextRelation
                 {
                     AnchorText = linkInfo.AnchorText,
                     Link = link,
                     ChildLink = childLink,
-                    LinkChildLinkRelation_RFID = 
-                        link.ToRabinFingerPrint() + "_" +
-                        childLink.ToRabinFingerPrint()
+                    LinkChildLinkRelation_RFID =
+                        link.ToHash() + "_" +
+                        childLink.ToHash()
                 };
 
                 AnchorTextExactRelations.AddOrUpdate(
-                    linkInfo.AnchorText.ToRabinFingerPrint() + "_" +
-                    link.ToRabinFingerPrint() + "_" +
-                    childLink.ToRabinFingerPrint(), new List<AnchorDataLinkTextRelation> { relation },
+                    linkInfo.AnchorText.ToHash() + "_" +
+                    link.ToHash() + "_" +
+                    childLink.ToHash(), new List<AnchorDataLinkTextRelation> { relation },
                     (key, oldRelations) =>
                     {
                         if (!oldRelations.Contains(relation))

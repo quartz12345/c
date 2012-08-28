@@ -5,7 +5,8 @@ using System.Text;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
-using TeamDev.Redis;
+//using TeamDev.Redis;
+using BookSleeve;
 
 using LinkSpider3.Process2.Core;
 using LinkSpider3.Process2.Data;
@@ -17,22 +18,30 @@ namespace LinkSpider3.Process2.Persistence
         : DisposableBase, IPersistence
     {
         IDictionary<string, string> properties;
-        RedisDataAccessProvider redis;
+        //RedisDataAccessProvider redis;
+        RedisConnection redis;
+        RedisTransaction trans;
 
         public RedisPersistence(IDictionary<string, string> properties)
         {
             this.properties = properties;
-            this.redis = new RedisDataAccessProvider();
-            this.redis.Configuration = new TeamDev.Redis.LanguageItems.Configuration();
-            this.redis.Configuration.Host = this.properties["server"];
-            this.redis.Configuration.Port = Convert.ToInt32(this.properties["port"]);
+            //this.redis = new RedisDataAccessProvider();
+            //this.redis.Configuration = new TeamDev.Redis.LanguageItems.Configuration();
+            //this.redis.Configuration.Host = this.properties["server"];
+            //this.redis.Configuration.Port = Convert.ToInt32(this.properties["port"]);
+            this.redis = new RedisConnection(this.properties["server"], int.Parse(this.properties["port"]));
+            this.redis.SetKeepAlive(1);
+            this.redis.Open();
+            trans = this.redis.CreateTransaction();
         }
 
         public object Load<T>(IDictionary<string, object> properties)
         {
             if (typeof(T).Equals(typeof(CollectorPool)))
             {
-                return new CollectorPool(this.redis.List["urn:pool"].Values);
+                //return new CollectorPool(this.redis.List["urn:pool"].Values);
+                var t = this.redis.Lists.RangeString(0, "urn:pool", 0, -1);
+                return new CollectorPool(this.redis.Wait(t));
             }
 
             //else if (typeof(T).Equals(typeof(ConcurrentRedisHash<LinkData>)))
@@ -58,7 +67,7 @@ namespace LinkSpider3.Process2.Persistence
 
             else
             {
-                return Activator.CreateInstance(typeof(T), this.redis, properties["name"]);
+                return Activator.CreateInstance(typeof(T), this.redis, properties["name"], properties["db"]);
             }
         }
 
@@ -69,7 +78,10 @@ namespace LinkSpider3.Process2.Persistence
 
         protected override void Cleanup()
         {
-            this.redis.Close();
+            var t = this.trans.Execute();
+            this.redis.Wait(t);
+
+            this.trans.Dispose();
             this.redis.Dispose();
         }
 

@@ -25,7 +25,7 @@ namespace LinkSpider3.Process2
                 locker.EnterWriteLock();
                 try
                 {
-                    visitedDomainHistory.Add(host.ToRabinFingerPrint());
+                    visitedDomainHistory.Add(host.ToHash());
                 }
                 finally
                 {
@@ -41,7 +41,7 @@ namespace LinkSpider3.Process2
 
             try
             {
-                return visitedDomainHistory.Contains(host.ToRabinFingerPrint());
+                return visitedDomainHistory.Contains(host.ToHash());
             }
             finally
             {

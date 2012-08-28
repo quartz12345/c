@@ -66,6 +66,9 @@
     <SignManifests>true</SignManifests>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BookSleeve">
+      <HintPath>..\..\..\libs\BookSleeve\BookSleeve.dll</HintPath>
+    </Reference>
     <Reference Include="HtmlAgilityPack">
       <HintPath>..\..\..\libs\HtmlAgilityPack.1.4.0\HtmlAgilityPack.dll</HintPath>
     </Reference>
@@ -79,9 +82,6 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="TeamDev.Redis">
-      <HintPath>..\..\..\libs\RedisProvider\TeamDev.Redis.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApplicationInfo.cs" />
@@ -104,6 +104,7 @@
     <Compile Include="Process2\Persistence\RedisPersistence.cs" />
     <Compile Include="Process2\RobotService.cs" />
     <Compile Include="Process2\TldParser.cs" />
+    <Compile Include="Process2\Utils\CRC32.cs" />
     <Compile Include="Process2\Utils\IP.cs" />
     <Compile Include="Process2\Utils\RabinFingerPrint.cs" />
     <Compile Include="Process2\VisitedDomainHistory.cs" />

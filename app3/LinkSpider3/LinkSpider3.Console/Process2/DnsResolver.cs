@@ -30,7 +30,7 @@ namespace LinkSpider3.Process2
 
         public Uri Resolve(Uri uri)
         {
-            ulong authority = uri.Host.ToRabinFingerPrint();
+            ulong authority = uri.Host.ToHash();
             
             if (cache.ContainsKey(authority))
                 return cache[authority];

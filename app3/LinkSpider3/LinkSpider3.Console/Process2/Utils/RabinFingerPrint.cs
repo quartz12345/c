@@ -5,6 +5,7 @@ using System.Text;
 
 namespace LinkSpider3.Process2.Utils
 {
+    // ref: http://www.developpez.net/forums/d863959/dotnet/general-dotnet/contribuez/algorithm-rabin-fingerprint/
     /// <summary>
     /// Génère des empreintes de fichiers
     /// </summary>

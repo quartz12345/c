@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 //using System.Web.Script.Serialization;
+
 using Newtonsoft.Json;
 
 namespace LinkSpider3.Process2.Extensions
@@ -14,12 +15,24 @@ namespace LinkSpider3.Process2.Extensions
             return string.IsNullOrEmpty(s);
         }
 
-        public static UInt64 ToRabinFingerPrint(this string s)
+        public static string ToHashString(this string s)
+        {
+            return Convert.ToString(ToHash(s));
+        }
+
+        public static UInt32 ToHash(this string s)
         {
             if (s.IsNullOrEmpty())
                 return 0;
 
-            return Utils.RabinFingerPrint.ComputeFingerPrint(s);
+            //return Utils.RabinFingerPrint.ComputeFingerPrint(s);
+            return ToCRC32(s);
+        }
+
+        public static UInt32 ToCRC32(this string s)
+        {
+            //Utils.CRC32_b crc = new Utils.CRC32_b();
+            return Utils.CRC32.Compute(s);
         }
 
         public static string JsonSerialize(this object value)
