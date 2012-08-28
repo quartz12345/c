@@ -122,7 +122,13 @@ Error: UriFormatException was unhandled by user code
 Description: Invalid URI: The hostname could not be parsed.
 More: >	linkspider3_console.exe!LinkSpider3.Process2.Extensions.UrlExtensions.NormalizeUri(string url, string baseUrl) Line 23 + 0x21 bytes	C#
 
+--------------------
 
+RABIN FINGERPRINT REFERRALS FOR PHP
+http://en.wikipedia.org/wiki/Rabin_fingerprint
+http://stackoverflow.com/questions/1391011/rabin-karp-algorithm-in-php
+http://www.scribd.com/doc/49855802/43/Rabin-Karp-%EF%AC%81ngerprinting
+http://stackoverflow.com/questions/9871850/implementation-of-rabin-karp-algorithm-with-php
 
 
 
