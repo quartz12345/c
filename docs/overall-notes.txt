@@ -1,0 +1,134 @@
+Page 1: List of Backlinks
+    Page URL                                    - backlinks
+    PR - Google Page Rank
+    IP Address
+    Link Status                                 - if link is 200, 404, etc
+    Target URL                                  - the destination of the link
+    Anchor Text
+    OBL                                         - count of how many outbound/external links are in the page url
+        Q. is this count of external links of the backlink?
+		A. yes
+    Total Links                                 - total links of the page including outbound/external links
+    Last Crawl Date
+Page 2: List of Pages
+    Page                                        - Internal Pages of the searched domain
+    External Links                              - Count of External Links
+    Referring Domains                           - Number of domains that links to the page
+    Referring IPs                               - Number of IPs that links to the page
+Page 3: List of Anchors
+    Anchor Text                                 - List of the anchor texts that backlinks of a domain have
+    Linking Root Domains containing Anchor Text - List of domain/s that uses the anchor text separated by comma
+    Linking IPs containing Anchor Text          - List of ip/s that uses the anchor text separated by comma
+    Backlink Count Total                        - Total Backlinks that uses the anchor text
+    Sites                                       - TODO: Sample: # of link/s on # of site/s on # of ip/s
+Page 4: List of Special TLD
+    Domain
+    Tld                                         - gov,edu,country tlds(us, ph), etc
+    
+    
+-----------
+
+1. search for keyword in domain : so the part before the / - http://sitestatz.com/redis_client/get_url_in_parts_of_url/article
+2. have it so we can do a seperate search for after the / - http://sitestatz.com/redis_client/get_url_in_main_url/article
+3. and a search for anchor text
+4. create a search to display the backlinks ; which is the main function of the site
+
+-----------
+NOTES:
+http://yahooapis.com and 
+http://yahooapis.com/ and 
+http://yahooapis.com/# and 
+http://yahooapis.com/javascript:void(0) 
+should be the same and only http://yahooapis.com/ should be saved.
+
+----------
+
+-------- Searches ---------
+
+This might help, i hope
+http://www.cyberciti.biz/tips/nohup-execute-commands-after-you-exit-from-a-shell-prompt.html 
+- sounds interesting
+http://sshnet.codeplex.com/ 
+- can this be used? just wondering.
+http://wiki.phonicuk.com/Installing-Mono-in-CentOS-5-x.ashx 
+- i searched, mono 2.8 above versions supports NET 4.0, maybe we can try 2.11 or not advisable?
+
+-------- Conditions -------
+dont index this pages if no external links
+about us,
+contact us, 
+privacy policy, 
+disclaimer,
+terms and conditions,
+disclosure
+- check or have a survey on the footer links of the sites if there are additional pages to exclude
+- create and algo of how to exclude the said pages above,
+- also check if google and other search engines like bing,yahoo that links to other sites, if not exclude them
+
+
+----------- From Edu People - just notes :)
+
+Disk Repository with Update Management (DRUM)
+that can store large volumes of arbitrary hashed data on disk and implement very fast check,
+update, and check+update operations using bucket sort.
+
+Spam Tracking and Avoidance through Reputation (STAR)
+dynamically allocates the budget of allowable pages for each domain and all of its
+subdomains in proportion to the number of in-degree links from other domains.
+
+Budget Enforcement with Anti-Spam Tactics (BEAST)
+involves a dynamically increasing number of disk
+queues among which the crawler spreads the URLs based on
+whether they fit within the budget or not.
+
+--------
+
+only include urls with initials a-z and 0-9
+exclude #, //, or javascript on urls
+
+--------
+
+Errors
+
+###
+
+File: HtmlProcessor.cs
+Line: 41
+Error: FatalExecutionEngineError was detected
+Description:
+The runtime has encountered a fatal error. The address of the error was at 0x6508bdfc, on thread 0x1494. 
+The error code is 0xc0000005. This error may be a bug in the CLR or in the unsafe or non-verifiable portions of user code. 
+Common sources of this bug include user marshaling errors for COM-interop or PInvoke, which may corrupt the stack.
+
+-----------------
+
+File: CollectorPool.cs
+Line: 51
+
+And
+
+File: HtmlProcessor.cs
+Line: 41
+
+
+Error: NullReferenceException was unhandled by user code
+Description: Object reference not set to an instance of an object.
+
+-----------------
+
+UrlExtensions.cs
+Line: 23
+Error: UriFormatException was unhandled by user code
+Description: Invalid URI: The hostname could not be parsed.
+More: >	linkspider3_console.exe!LinkSpider3.Process2.Extensions.UrlExtensions.NormalizeUri(string url, string baseUrl) Line 23 + 0x21 bytes	C#
+
+--------------------
+
+RABIN FINGERPRINT REFERRALS FOR PHP
+http://en.wikipedia.org/wiki/Rabin_fingerprint
+http://stackoverflow.com/questions/1391011/rabin-karp-algorithm-in-php
+http://www.scribd.com/doc/49855802/43/Rabin-Karp-%EF%AC%81ngerprinting
+http://stackoverflow.com/questions/9871850/implementation-of-rabin-karp-algorithm-with-php
+
+
+
