@@ -12,7 +12,7 @@ namespace LinkSpider3.Process2.Data
     {
         public List<string> ChildLinks { get; set; }
         public List<string> BackLinks { get; set; }
-        public ulong Link_RFID { get; set; }
+        public string Link_RFID { get; set; }
         public string Link { get; set; }
         public string Domain { get; set; }
         public string DomainOrSubdomain { get; set; }

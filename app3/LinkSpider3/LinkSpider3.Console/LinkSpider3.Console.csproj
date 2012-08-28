@@ -86,6 +86,7 @@
   <ItemGroup>
     <Compile Include="ApplicationInfo.cs" />
     <Compile Include="Process2\CollectorPool.cs" />
+    <Compile Include="Process2\Core\ConcurrentRedisHash.cs" />
     <Compile Include="Process2\Core\DisposableBase.cs" />
     <Compile Include="Process2\Data\AnchorData.cs" />
     <Compile Include="Process2\Data\AnchorDataLinkTextRelation.cs" />

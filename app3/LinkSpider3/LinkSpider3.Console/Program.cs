@@ -180,7 +180,7 @@ namespace LinkSpider3
                 });
 
             int totalLinks = 0;
-            totalLinks = repository.Links.Where(
+            totalLinks = repository.Links.ToArray().Where(
                 kvp =>
                 {
                     return kvp.Value.IsDirty;
@@ -207,7 +207,7 @@ namespace LinkSpider3
             LogLine("LinkRating");
             LogLine(repository.LinkRating.JsonSerialize(true));
             LogLine("Links");
-            LogLine(repository.Links.Where((kv) => { return kv.Value.IsDirty; }).JsonSerialize(true));
+            LogLine(repository.Links.ToArray().Where((kv) => { return kv.Value.IsDirty; }).JsonSerialize(true));
             LogLine("LinkStatusCurrent");
             LogLine(repository.LinkStatusCurrent.JsonSerialize(true));
             LogLine("LinkStatusHistory");

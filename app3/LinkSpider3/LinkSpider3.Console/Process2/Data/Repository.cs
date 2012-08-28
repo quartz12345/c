@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Net;
 
+using LinkSpider3.Process2.Core;
 using LinkSpider3.Process2.Extensions;
 using LinkSpider3.Process2.Persistence;
 using LinkSpider3.Process2.Utils;
@@ -15,44 +16,54 @@ namespace LinkSpider3.Process2.Data
     {
         // Saved as urn:link:data
         // link, LinkData
-        public ConcurrentDictionary<string, LinkData> Links;
+        // public ConcurrentDictionary<string, LinkData> Links;
+        public ConcurrentRedisHash<LinkData> Links;
         
         // Saved as urn:link:status:current
         // link, status (200, 500, etc.)
-        public ConcurrentDictionary<string, int> LinkStatusCurrent;
+        //public ConcurrentDictionary<string, int> LinkStatusCurrent;
+        public ConcurrentRedisHash<int> LinkStatusCurrent;
 
         // Saved as urn:link:status:history
         // link, array of LinkStatus
-        public ConcurrentDictionary<string, List<LinkStatus>> LinkStatusHistory;
+        //public ConcurrentDictionary<string, List<LinkStatus>> LinkStatusHistory;
+        public ConcurrentRedisHash<List<LinkStatus>> LinkStatusHistory;
 
         // Saved as urn:link:rating
         // link, number of backlinks
-        public ConcurrentDictionary<string, int> LinkRating;
+        //public ConcurrentDictionary<string, int> LinkRating;
+        public ConcurrentRedisHash<int> LinkRating;
 
-        // Saved as urn:link:crawldate
+        // Saved as urn:link:crawldate:current
         // link, LinkDate
-        public ConcurrentDictionary<string, LinkDate> LinkCrawlDateCurrent;
+        //public ConcurrentDictionary<string, LinkDate> LinkCrawlDateCurrent;
+        public ConcurrentRedisHash<LinkDate> LinkCrawlDateCurrent;
 
         // Saved as urn:link:crawldate:history
         // link, array of LinkDate
-        public ConcurrentDictionary<string, List<LinkDate>> LinkCrawlDateHistory;
+        //public ConcurrentDictionary<string, List<LinkDate>> LinkCrawlDateHistory;
+        public ConcurrentRedisHash<List<LinkDate>> LinkCrawlDateHistory;
 
         // Saved as urn:domain:data
         // domain, array of link
-        public ConcurrentDictionary<string, List<string>> Domains;
+        //public ConcurrentDictionary<string, List<string>> Domains;
+        public ConcurrentRedisHash<List<string>> Domains;
 
         // Saved as urn:domainorsubdomain:data
         // subdomain, array of link
-        public ConcurrentDictionary<string, List<string>> DomainOrSubdomains;
+        //public ConcurrentDictionary<string, List<string>> DomainOrSubdomains;
+        public ConcurrentRedisHash<List<string>> DomainOrSubdomains;
 
 
         // Saved as urn:anchor:data
         // link_rfid + childlink_rfid, array of AnchorData
-        public ConcurrentDictionary<string, List<AnchorData>> Anchors;
+        //public ConcurrentDictionary<string, List<AnchorData>> Anchors;
+        public ConcurrentRedisHash<List<AnchorData>> Anchors;
 
         // Saved as urn:anchor:textexact
         // text_rfid + link_rfid + childlink_rfid, array of AnchorDataLinkTextRelation
-        public ConcurrentDictionary<string, List<AnchorDataLinkTextRelation>> AnchorTextExactRelations;
+        //public ConcurrentDictionary<string, List<AnchorDataLinkTextRelation>> AnchorTextExactRelations;
+        public ConcurrentRedisHash<List<AnchorDataLinkTextRelation>> AnchorTextExactRelations;
 
 
 
@@ -75,16 +86,27 @@ namespace LinkSpider3.Process2.Data
 
         public void LoadData()
         {
-            Links = this.persistence.Load<ConcurrentDictionary<string, LinkData>>(null) as ConcurrentDictionary<string, LinkData>;
-            LinkStatusCurrent = this.persistence.Load<ConcurrentDictionary<string, int>>(null) as ConcurrentDictionary<string, int>;
-            LinkStatusHistory = this.persistence.Load<ConcurrentDictionary<string, List<LinkStatus>>>(null) as ConcurrentDictionary<string, List<LinkStatus>>;
-            LinkRating = this.persistence.Load<ConcurrentDictionary<string, int>>(null) as ConcurrentDictionary<string, int>;
-            LinkCrawlDateCurrent = this.persistence.Load<ConcurrentDictionary<string, LinkDate>>(null) as ConcurrentDictionary<string, LinkDate>;
-            LinkCrawlDateHistory = this.persistence.Load<ConcurrentDictionary<string, List<LinkDate>>>(null) as ConcurrentDictionary<string, List<LinkDate>>;
-            Domains = this.persistence.Load<ConcurrentDictionary<string, List<string>>>(null) as ConcurrentDictionary<string, List<string>>;
-            DomainOrSubdomains = this.persistence.Load<ConcurrentDictionary<string, List<string>>>(null) as ConcurrentDictionary<string, List<string>>;
-            Anchors = this.persistence.Load<ConcurrentDictionary<string, List<AnchorData>>>(null) as ConcurrentDictionary<string, List<AnchorData>>;
-            AnchorTextExactRelations = this.persistence.Load<ConcurrentDictionary<string, List<AnchorDataLinkTextRelation>>>(null) as ConcurrentDictionary<string, List<AnchorDataLinkTextRelation>>;
+            //Links = this.persistence.Load<ConcurrentDictionary<string, LinkData>>(null) as ConcurrentDictionary<string, LinkData>;
+            //LinkStatusCurrent = this.persistence.Load<ConcurrentDictionary<string, int>>(null) as ConcurrentDictionary<string, int>;
+            //LinkStatusHistory = this.persistence.Load<ConcurrentDictionary<string, List<LinkStatus>>>(null) as ConcurrentDictionary<string, List<LinkStatus>>;
+            //LinkRating = this.persistence.Load<ConcurrentDictionary<string, int>>(null) as ConcurrentDictionary<string, int>;
+            //LinkCrawlDateCurrent = this.persistence.Load<ConcurrentDictionary<string, LinkDate>>(null) as ConcurrentDictionary<string, LinkDate>;
+            //LinkCrawlDateHistory = this.persistence.Load<ConcurrentDictionary<string, List<LinkDate>>>(null) as ConcurrentDictionary<string, List<LinkDate>>;
+            //Domains = this.persistence.Load<ConcurrentDictionary<string, List<string>>>(null) as ConcurrentDictionary<string, List<string>>;
+            //DomainOrSubdomains = this.persistence.Load<ConcurrentDictionary<string, List<string>>>(null) as ConcurrentDictionary<string, List<string>>;
+            //Anchors = this.persistence.Load<ConcurrentDictionary<string, List<AnchorData>>>(null) as ConcurrentDictionary<string, List<AnchorData>>;
+            //AnchorTextExactRelations = this.persistence.Load<ConcurrentDictionary<string, List<AnchorDataLinkTextRelation>>>(null) as ConcurrentDictionary<string, List<AnchorDataLinkTextRelation>>;
+
+            Links = this.persistence.Load<ConcurrentRedisHash<LinkData>>(new Dictionary<string, object> { { "name", "urn:link:data" } }) as ConcurrentRedisHash<LinkData>;
+            LinkStatusCurrent = this.persistence.Load<ConcurrentRedisHash<int>>(new Dictionary<string, object> { { "name", "urn:link:status:current" } }) as ConcurrentRedisHash<int>;
+            LinkStatusHistory = this.persistence.Load<ConcurrentRedisHash<List<LinkStatus>>>(new Dictionary<string, object> { { "name", "urn:link:status:history" } }) as ConcurrentRedisHash<List<LinkStatus>>;
+            LinkRating = this.persistence.Load<ConcurrentRedisHash<int>>(new Dictionary<string, object> { { "name", "urn:link:rating" } }) as ConcurrentRedisHash<int>;
+            LinkCrawlDateCurrent = this.persistence.Load<ConcurrentRedisHash<LinkDate>>(new Dictionary<string, object> { { "name", "urn:link:crawldate:current" } }) as ConcurrentRedisHash<LinkDate>;
+            LinkCrawlDateHistory = this.persistence.Load<ConcurrentRedisHash<List<LinkDate>>>(new Dictionary<string, object> { { "name", "urn:link:crawldate:history" } }) as ConcurrentRedisHash<List<LinkDate>>;
+            Domains = this.persistence.Load<ConcurrentRedisHash<List<string>>>(new Dictionary<string, object> { { "name", "urn:domain:data" } }) as ConcurrentRedisHash<List<string>>;
+            DomainOrSubdomains = this.persistence.Load<ConcurrentRedisHash<List<string>>>(new Dictionary<string, object> { { "name", "urn:domainorsubdomain:data" } }) as ConcurrentRedisHash<List<string>>;
+            Anchors = this.persistence.Load<ConcurrentRedisHash<List<AnchorData>>>(new Dictionary<string, object> { { "name", "urn:anchor:data" } }) as ConcurrentRedisHash<List<AnchorData>>;
+            AnchorTextExactRelations = this.persistence.Load<ConcurrentRedisHash<List<AnchorDataLinkTextRelation>>>(new Dictionary<string, object> { { "name", "urn:anchor:textexact" } }) as ConcurrentRedisHash<List<AnchorDataLinkTextRelation>>;
         }
 
         public void SaveLink(
@@ -96,7 +118,7 @@ namespace LinkSpider3.Process2.Data
             // Save link data
             LinkData l = new LinkData();
             l.IsDirty = true;
-            l.Link_RFID = link.ToRabinFingerPrint();
+            l.Link_RFID = link.ToRabinFingerPrint().ToString();
             l.Link = link;
             l.Domain = linkInfo.Domain;
             l.DomainOrSubdomain = linkInfo.DomainOrSubdomain;

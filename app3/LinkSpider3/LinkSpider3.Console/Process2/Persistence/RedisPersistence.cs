@@ -34,27 +34,32 @@ namespace LinkSpider3.Process2.Persistence
             {
                 return new CollectorPool(this.redis.List["urn:pool"].Values);
             }
-            
-            else if (typeof(T).Equals(typeof(ConcurrentDictionary<string, LinkData>)))
-            {
-                ConcurrentDictionary<string, LinkData> links =
-                    new ConcurrentDictionary<string, LinkData>(100, this.redis.Hash["urn:link:data"].Lenght);
-                
-                Parallel.ForEach<string>(this.redis.Hash["urn:link:data"].Values,
-                    ld =>
-                    {
-                        LinkData ldObj = ld.JsonDeserialize<LinkData>();
-                        links.AddOrUpdate(ldObj.Link, ldObj,
-                            (link, oldLdObj) => 
-                            { 
-                                return oldLdObj; 
-                            });
-                    });
-                
-                return links;
-            }
 
-            return Activator.CreateInstance<T>();
+            //else if (typeof(T).Equals(typeof(ConcurrentRedisHash<LinkData>)))
+            //{
+            //    ConcurrentRedisHash<LinkData> links = new ConcurrentRedisHash<LinkData>(this.redis, "urn:link:data");
+
+                //ConcurrentDictionary<string, LinkData> links =
+            //    new ConcurrentDictionary<string, LinkData>(100, this.redis.Hash["urn:link:data"].Lenght);
+
+                //Parallel.ForEach<string>(this.redis.Hash["urn:link:data"].Values,
+            //    ld =>
+            //    {
+            //        LinkData ldObj = ld.JsonDeserialize<LinkData>();
+            //        links.AddOrUpdate(ldObj.Link, ldObj,
+            //            (link, oldLdObj) => 
+            //            { 
+            //                return oldLdObj; 
+            //            });
+            //    });
+
+            //    return links;
+            //}
+
+            else
+            {
+                return Activator.CreateInstance(typeof(T), this.redis, properties["name"]);
+            }
         }
 
         public void Save<T>(T o, IDictionary<string, object> properties)
@@ -76,6 +81,11 @@ namespace LinkSpider3.Process2.Persistence
             //return (result > 0);
 
             return true;
+        }
+
+        public object Provider
+        {
+            get { return this.redis; }
         }
     }
 }
