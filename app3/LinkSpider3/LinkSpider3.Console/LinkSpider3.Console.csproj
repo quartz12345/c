@@ -72,6 +72,12 @@
     <Reference Include="HtmlAgilityPack">
       <HintPath>..\..\..\libs\HtmlAgilityPack.1.4.0\HtmlAgilityPack.dll</HintPath>
     </Reference>
+    <Reference Include="MongoDB.Bson">
+      <HintPath>..\..\..\libs\MongoDB\MongoDB.Bson.dll</HintPath>
+    </Reference>
+    <Reference Include="MongoDB.Driver">
+      <HintPath>..\..\..\libs\MongoDB\MongoDB.Driver.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\..\..\libs\JSON.NET\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -86,20 +92,24 @@
   <ItemGroup>
     <Compile Include="ApplicationInfo.cs" />
     <Compile Include="Process2\CollectorPool.cs" />
+    <Compile Include="Process2\Core\ConcurrentMongoHash.cs" />
     <Compile Include="Process2\Core\ConcurrentRedisHash.cs" />
     <Compile Include="Process2\Core\DisposableBase.cs" />
+    <Compile Include="Process2\Core\IConcurrentHash.cs" />
     <Compile Include="Process2\Data\AnchorData.cs" />
     <Compile Include="Process2\Data\AnchorDataLinkTextRelation.cs" />
     <Compile Include="Process2\Data\LinkData.cs" />
     <Compile Include="Process2\Data\LinkDate.cs" />
     <Compile Include="Process2\Data\LinkStatus.cs" />
     <Compile Include="Process2\Data\Repository.cs" />
+    <Compile Include="Process2\Data\SimpleObject.cs" />
     <Compile Include="Process2\DnsResolver.cs" />
     <Compile Include="Process2\Extensions\ObjectExtensions.cs" />
     <Compile Include="Process2\Extensions\StringExtensions.cs" />
     <Compile Include="Process2\Extensions\UrlExtensions.cs" />
     <Compile Include="Process2\HtmlProcessor.cs" />
     <Compile Include="Process2\Persistence\IPersistence.cs" />
+    <Compile Include="Process2\Persistence\MongoPersistence.cs" />
     <Compile Include="Process2\Persistence\PersistenceFactory.cs" />
     <Compile Include="Process2\Persistence\RedisPersistence.cs" />
     <Compile Include="Process2\RobotService.cs" />

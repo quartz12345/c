@@ -13,6 +13,9 @@ namespace LinkSpider3.Process2.Persistence
             if (provider == "redis")
                 return Activator.CreateInstance(typeof(RedisPersistence), properties) as IPersistence;
 
+            if (provider == "mongodb")
+                return Activator.CreateInstance(typeof(MongoPersistence), properties) as IPersistence;
+
             throw new NotSupportedException("Provider `" + provider + "` is not supported.");
         }
     }

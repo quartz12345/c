@@ -99,5 +99,11 @@ namespace LinkSpider3.Process2.Persistence
         {
             get { return this.redis; }
         }
+
+
+        public string ProviderName
+        {
+            get { return "redis"; }
+        }
     }
 }

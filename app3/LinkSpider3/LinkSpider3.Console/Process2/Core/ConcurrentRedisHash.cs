@@ -13,7 +13,7 @@ using LinkSpider3.Process2.Extensions;
 namespace LinkSpider3.Process2.Core
 {
     public class ConcurrentRedisHash<T>
-        : Core.DisposableBase
+        : Core.DisposableBase, LinkSpider3.Process2.Core.IConcurrentHash<T>
     {
         //private LanguageHash Hash;
         //private IHashCommands Hash;

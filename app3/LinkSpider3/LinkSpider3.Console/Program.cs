@@ -60,9 +60,13 @@ namespace LinkSpider3
             LogBuffer = new StringBuilder();
 
             int parallelCount = 3;
-            string provider = "redis";
+            //string provider = "redis";
+            //string server = "127.0.0.1";
+            //string port = "6379";
+            string provider = "mongodb";
             string server = "127.0.0.1";
-            string port = "6379";
+            string port = "27017";
+            string database = "ls";
 
             Console.CancelKeyPress += new ConsoleCancelEventHandler(Console_CancelKeyPress);
             PrintAndClearHeaderArea();
@@ -75,7 +79,8 @@ namespace LinkSpider3
                     new Dictionary<string, string>
                     {
                         { "server", server },
-                        { "port", port }
+                        { "port", port },
+                        { "database", database }
                     });
             
             if (!persistence.Ping())
@@ -174,12 +179,13 @@ namespace LinkSpider3
 
             PrintAndClearHeaderArea();
             LogLine("Closing database...");
+            repository.Commit<CollectorPool>(pool, null);
             ((IDisposable)persistence).Dispose();
 
 
             // Print statistics
             LogLine("Pool count: before = {0} now = {1}", poolCount, pool.Count);
-            int totalLinks = repository.CrawlDateLinks[DateTime.Today.ToString("yyMMdd")].Count;
+            int totalLinks = repository.CrawlDateLinks[DateTime.Today.ToString("yyMMdd")].Value.Count;
             LogLine("Links crawled: {0} in {1} seconds ({2}/sec)",
                 totalLinks, (DateTime.Now - elapsed).Seconds,
                 (totalLinks) / (DateTime.Now - elapsed).Seconds);

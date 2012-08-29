@@ -63,6 +63,8 @@ namespace LinkSpider3.Process2
             get { return pool.Count; }
         }
 
+        public string[] ToArray() { return pool.ToArray(); }
+
         #region Disposable
         protected override void Cleanup()
         {
