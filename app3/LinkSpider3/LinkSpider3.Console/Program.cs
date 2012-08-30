@@ -59,7 +59,7 @@ namespace LinkSpider3
 
             LogBuffer = new StringBuilder();
 
-            int parallelCount = 3;
+            int parallelCount = 15;
             //string provider = "redis";
             //string server = "127.0.0.1";
             //string port = "6379";

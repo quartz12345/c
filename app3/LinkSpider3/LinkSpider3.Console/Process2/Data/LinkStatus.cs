@@ -7,7 +7,6 @@ namespace LinkSpider3.Process2.Data
 {
     public class LinkStatus
     {
-        public string Link { get; set; }
         public int Status { get; set; }
 
         // yyMMdd

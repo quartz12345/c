@@ -22,19 +22,19 @@ namespace LinkSpider3.Process2.Data
         public string IPType { get; set; }
         public string Title { get; set; }
 
-        [JsonIgnore]
-        public bool IsDirty { get; set; }
+        //[JsonIgnore]
+        //public bool IsDirty { get; set; }
 
-        [JsonIgnore]
-        public List<string> NewChildLinks { get; set; }
+        //[JsonIgnore]
+        //public List<string> NewChildLinks { get; set; }
 
         public LinkData()
         {
             ChildLinks = new List<string>();
             BackLinks = new List<string>();
-            NewChildLinks = new List<string>();
+            //NewChildLinks = new List<string>();
             
-            IsDirty = false;
+            //IsDirty = false;
         }
 
         public LinkData Merge(LinkData data)
@@ -54,7 +54,7 @@ namespace LinkSpider3.Process2.Data
             this.IP = data.IP;
             this.IPType = data.IPType;
             this.Title = data.Title;
-            this.IsDirty = true;
+            //this.IsDirty = true;
 
             return this;
         }

@@ -4,9 +4,11 @@ using System.Linq;
 using System.Text;
 
 using MongoDB.Driver;
+using MongoDB.Bson;
 
 using LinkSpider3.Process2.Core;
 using LinkSpider3.Process2.Extensions;
+using LinkSpider3.Process2.Data;
 
 namespace LinkSpider3.Process2.Persistence
 {
@@ -40,8 +42,12 @@ namespace LinkSpider3.Process2.Persistence
         {
             if (typeof(T).Equals(typeof(CollectorPool)))
             {
-                var collection = this.database.GetCollection<string>("urn:pool");
-                return new CollectorPool(collection.FindAll());
+                var collection = this.database.GetCollection<SimpleObject<List<string>>>("urn:pool");
+                var so = collection.FindOne();
+                if (so.IsNull())
+                    return new CollectorPool();
+
+                return new CollectorPool(so.Value);
             }
             else
             {
@@ -54,9 +60,15 @@ namespace LinkSpider3.Process2.Persistence
             if (typeof(T).Equals(typeof(CollectorPool)))
             {
                 CollectorPool pool = o as CollectorPool;
-                var collection = this.database.GetCollection<string>("urn:pool");
-                collection.RemoveAll();
-                collection.InsertBatch(pool.ToArray());
+                var collection = this.database.GetCollection<SimpleObject<List<string>>>("urn:pool");
+                var so = collection.FindOne();
+                if (so.IsNull())
+                {
+                    so = new SimpleObject<List<string>>();
+                    so.Id = "1";
+                }
+                so.Value = new List<string>(pool.ToArray());
+                collection.Save(so);
                 return;
             }
 

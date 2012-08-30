@@ -50,12 +50,12 @@ namespace LinkSpider3.Process2.Data
         // Saved as urn:domain:data
         // domain, array of link
         //public ConcurrentDictionary<string, List<string>> Domains;
-        public IConcurrentHash<SimpleObject<List<string>>> Domains;
+        public IConcurrentHash<SimpleObject<DomainData>> Domains;
 
         // Saved as urn:domainorsubdomain:data
         // subdomain, array of link
         //public ConcurrentDictionary<string, List<string>> DomainOrSubdomains;
-        public IConcurrentHash<SimpleObject<List<string>>> DomainOrSubdomains;
+        public IConcurrentHash<SimpleObject<DomainOrSubdomainData>> DomainOrSubdomains;
 
 
         // Saved as urn:anchor:data
@@ -124,8 +124,8 @@ namespace LinkSpider3.Process2.Data
                 LinkCrawlDateCurrent = this.persistence.Load<ConcurrentMongoHash<SimpleObject<LinkDate>>>(new Dictionary<string, object> { { "name", "urn:link:crawldate:current" }, { "db", 5 } }) as IConcurrentHash<SimpleObject<LinkDate>>;
                 LinkCrawlDateHistory = this.persistence.Load<ConcurrentMongoHash<SimpleObject<List<LinkDate>>>>(new Dictionary<string, object> { { "name", "urn:link:crawldate:history" }, { "db", 6 } }) as IConcurrentHash<SimpleObject<List<LinkDate>>>;
                 CrawlDateLinks = this.persistence.Load<ConcurrentMongoHash<SimpleObject<List<string>>>>(new Dictionary<string, object> { { "name", "urn:crawldate:link" }, { "db", 7 } }) as IConcurrentHash<SimpleObject<List<string>>>;
-                Domains = this.persistence.Load<ConcurrentMongoHash<SimpleObject<List<string>>>>(new Dictionary<string, object> { { "name", "urn:domain:data" }, { "db", 8 } }) as IConcurrentHash<SimpleObject<List<string>>>;
-                DomainOrSubdomains = this.persistence.Load<ConcurrentMongoHash<SimpleObject<List<string>>>>(new Dictionary<string, object> { { "name", "urn:domainorsubdomain:data" }, { "db", 9 } }) as IConcurrentHash<SimpleObject<List<string>>>;
+                Domains = this.persistence.Load<ConcurrentMongoHash<SimpleObject<DomainData>>>(new Dictionary<string, object> { { "name", "urn:domain:data" }, { "db", 8 } }) as IConcurrentHash<SimpleObject<DomainData>>;
+                DomainOrSubdomains = this.persistence.Load<ConcurrentMongoHash<SimpleObject<DomainOrSubdomainData>>>(new Dictionary<string, object> { { "name", "urn:domainorsubdomain:data" }, { "db", 9 } }) as IConcurrentHash<SimpleObject<DomainOrSubdomainData>>;
                 Anchors = this.persistence.Load<ConcurrentMongoHash<SimpleObject<List<AnchorData>>>>(new Dictionary<string, object> { { "name", "urn:anchor:data" }, { "db", 10 } }) as IConcurrentHash<SimpleObject<List<AnchorData>>>;
                 AnchorTextExactRelations = this.persistence.Load<ConcurrentMongoHash<SimpleObject<List<AnchorDataLinkTextRelation>>>>(new Dictionary<string, object> { { "name", "urn:anchor:textexact" }, { "db", 11 } }) as IConcurrentHash<SimpleObject<List<AnchorDataLinkTextRelation>>>;
             }
@@ -140,7 +140,7 @@ namespace LinkSpider3.Process2.Data
         {
             // Save link data
             LinkData l = new LinkData();
-            l.IsDirty = true;
+            //l.IsDirty = true;
             l.Id = link.ToHashString();
             l.Link = link;
             l.Domain = linkInfo.Domain;
@@ -154,7 +154,7 @@ namespace LinkSpider3.Process2.Data
             if (!childLink.IsNullOrEmpty() && !l.ChildLinks.Contains(childLink))
             {
                 l.ChildLinks.Add(childLink);
-                l.NewChildLinks.Add(childLink);
+                //l.NewChildLinks.Add(childLink);
             }
 
             if (!backLink.IsNullOrEmpty() && !l.BackLinks.Contains(backLink))
@@ -184,7 +184,7 @@ namespace LinkSpider3.Process2.Data
             // Save link status history
             LinkStatus linkStatus = new LinkStatus
             {
-                Link = link,
+                //Link = link,
                 Date = DateTime.Now.ToString("yyMMdd"),
                 Time = DateTime.Now.ToString("hhmmss"),
                 Status = linkInfo.Status
@@ -263,28 +263,38 @@ namespace LinkSpider3.Process2.Data
 
 
             // Domains
-            SimpleObject<List<string>> so7 = new SimpleObject<List<string>>
+            SimpleObject<DomainData> so7 = new SimpleObject<DomainData>
             {
                 Id = l.Domain.ToHashString(),
-                Value = new List<string> { l.Id }
+                Value = new DomainData { Domain = l.Domain, Links = new List<string> { l.Id } }
             };
             Domains.AddOrUpdate(so7.Id, so7,
                 (key, oldSo7) =>
                 {
-                    if (!oldSo7.Value.Contains(l.Id))
-                        oldSo7.Value.Add(l.Id);
+                    if (oldSo7.Value.IsNull())
+                        oldSo7.Value = new DomainData { Domain = l.Domain, Links = new List<string>() };
+
+                    if (!oldSo7.Value.Links.Contains(l.Id))
+                        oldSo7.Value.Links.Add(l.Id);
                     return oldSo7;
                 });
 
 
             // DomainOrSubdomains
-            so7.Id = l.DomainOrSubdomain.ToHashString();
-            DomainOrSubdomains.AddOrUpdate(so7.Id, so7,
-                (key, oldSo7) =>
+            SimpleObject<DomainOrSubdomainData> so7a = new SimpleObject<DomainOrSubdomainData>
+            {
+                Id = l.DomainOrSubdomain.ToHashString(),
+                Value = new DomainOrSubdomainData { DomainOrSubdomain = l.DomainOrSubdomain, Links = new List<string> { l.Id } }
+            };
+            DomainOrSubdomains.AddOrUpdate(so7a.Id, so7a,
+                (key, oldSo7a) =>
                 {
-                    if (!oldSo7.Value.Contains(l.Id))
-                        oldSo7.Value.Add(l.Id);
-                    return oldSo7;
+                    if (oldSo7a.Value.IsNull())
+                        oldSo7a.Value = new DomainOrSubdomainData { DomainOrSubdomain = l.DomainOrSubdomain, Links = new List<string> { l.Id } };
+
+                    if (!oldSo7a.Value.Links.Contains(l.Id))
+                        oldSo7a.Value.Links.Add(l.Id);
+                    return oldSo7a;
                 });
 
 

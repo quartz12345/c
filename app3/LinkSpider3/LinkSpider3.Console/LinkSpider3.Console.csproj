@@ -98,6 +98,8 @@
     <Compile Include="Process2\Core\IConcurrentHash.cs" />
     <Compile Include="Process2\Data\AnchorData.cs" />
     <Compile Include="Process2\Data\AnchorDataLinkTextRelation.cs" />
+    <Compile Include="Process2\Data\DomainData.cs" />
+    <Compile Include="Process2\Data\DomainOrSubdomainData.cs" />
     <Compile Include="Process2\Data\LinkData.cs" />
     <Compile Include="Process2\Data\LinkDate.cs" />
     <Compile Include="Process2\Data\LinkStatus.cs" />
