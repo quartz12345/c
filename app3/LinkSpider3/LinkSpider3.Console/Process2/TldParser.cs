@@ -10,6 +10,21 @@ namespace LinkSpider3.Process2
 {
     public class TldParser
     {
+        private static TldParser instance;
+        private static object o = new object();
+        internal static TldParser Instance
+        {
+            get
+            {
+                lock (o)
+                {
+                    if (instance == null)
+                        instance = new TldParser();
+                    return instance;
+                }
+            }
+        }
+
         private List<string> TldMozillaList = new List<string>();
 
         public TldParser()

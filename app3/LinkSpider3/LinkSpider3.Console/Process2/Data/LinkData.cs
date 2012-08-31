@@ -15,12 +15,14 @@ namespace LinkSpider3.Process2.Data
         public string Id { get; set; }
         public string Link { get; set; }
         public string Domain { get; set; }
-        public string DomainOrSubdomain { get; set; }
         public string DomainScheme { get; set; }
         public string Tld { get; set; }
         public string IP { get; set; }
         public string IPType { get; set; }
         public string Title { get; set; }
+
+        [Obsolete("Should not be used")]
+        public string DomainOrSubdomain { get; set; }
 
         //[JsonIgnore]
         //public bool IsDirty { get; set; }
@@ -48,7 +50,7 @@ namespace LinkSpider3.Process2.Data
                     this.BackLinks.Add(bl);
 
             this.Domain = data.Domain;
-            this.DomainOrSubdomain = data.DomainOrSubdomain;
+            this.DomainOrSubdomain = data.Domain;
             this.DomainScheme = data.DomainScheme;
             this.Tld = data.Tld;
             this.IP = data.IP;

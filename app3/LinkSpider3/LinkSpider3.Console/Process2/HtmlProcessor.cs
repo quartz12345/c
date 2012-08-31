@@ -85,7 +85,7 @@ namespace LinkSpider3.Process2
             public string AnchorRel { get; set; }
             public string AnchorKind { get; set; }
             public string Domain { get; private set;  }
-            public string DomainOrSubdomain { get; private set; }
+            //public string DomainOrSubdomain { get; private set; }
             public string DomainScheme { get; private set; }
             public string Tld { get; private set; }
             public string Title { get; set; }
@@ -104,20 +104,21 @@ namespace LinkSpider3.Process2
                         throw new ArgumentException("LinkInfo.Href is passed with an invalid url.");
                     
                     DomainScheme = uri.Scheme;
-                    DomainOrSubdomain = uri.Host;
+                    Domain = uri.Host;
+                    //DomainOrSubdomain = uri.Host;
                     Tld = this.tldParser.GetTld(uri.Host);
 
                     // Get the correct domain
-                    if (Tld.IsNullOrEmpty())
-                    {
-                        Domain = uri.Host;
-                    }
-                    else
-                    {
-                        string hostNoTld = uri.Host.Remove(uri.Host.Length - (Tld.Length + 1));
-                        int lastDot = hostNoTld.LastIndexOf('.');
-                        Domain = hostNoTld.Substring(lastDot + 1) + "." + Tld;
-                    }
+                    //if (Tld.IsNullOrEmpty())
+                    //{
+                    //    Domain = uri.Host;
+                    //}
+                    //else
+                    //{
+                    //    string hostNoTld = uri.Host.Remove(uri.Host.Length - (Tld.Length + 1));
+                    //    int lastDot = hostNoTld.LastIndexOf('.');
+                    //    Domain = hostNoTld.Substring(lastDot + 1) + "." + Tld;
+                    //}
                 }
             }
 

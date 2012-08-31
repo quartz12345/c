@@ -20,7 +20,7 @@ namespace LinkSpider3
         internal class TaskState
         {
             public CollectorPool Pool;
-            public VisitedUrlHistory History;
+            public VisitedUrlHistory UrlHistory;
             public VisitedDomainHistory DomainHistory;
             public TldParser TldParser;
             public RobotService Robots;
@@ -59,7 +59,7 @@ namespace LinkSpider3
 
             LogBuffer = new StringBuilder();
 
-            int parallelCount = 15;
+            int parallelCount = 5;
             //string provider = "redis";
             //string server = "127.0.0.1";
             //string port = "6379";
@@ -103,6 +103,9 @@ namespace LinkSpider3
             pool.Store("jubacs.somee.com");
             pool.Store("dmoz.org");
             pool.Store("dir.yahoo.com");
+            pool.Store("lixam.com");
+            pool.Store("lixma.com");
+
             poolCount = pool.Count;
             LogLine("done. Found " + poolCount);
 
@@ -131,7 +134,7 @@ namespace LinkSpider3
                 ea.SetObserved();
             };
 
-            DateTime elapsed = DateTime.Now;
+            DateTime start = DateTime.Now;
             CancellationTokenSource cancelTokenSource = new CancellationTokenSource();
             CancellationToken cancelToken = cancelTokenSource.Token;
             //CountdownEvent countdown = new CountdownEvent(parallelCount);
@@ -141,7 +144,7 @@ namespace LinkSpider3
             {
                 TaskState state = new TaskState();
                 state.Pool = pool;
-                state.History = history;
+                state.UrlHistory = history;
                 state.DomainHistory = domainHistory;
                 state.TldParser = tldParser;
                 state.Robots = robots;
@@ -184,33 +187,33 @@ namespace LinkSpider3
 
 
             // Print statistics
+            DateTime elapsed = DateTime.Now;
             LogLine("Pool count: before = {0} now = {1}", poolCount, pool.Count);
             int totalLinks = repository.CrawlDateLinks[DateTime.Today.ToString("yyMMdd")].Value.Count;
             LogLine("Links crawled: {0} in {1} seconds ({2}/sec)",
-                totalLinks, (DateTime.Now - elapsed).Seconds,
-                (totalLinks) / (DateTime.Now - elapsed).Seconds);
+                totalLinks, (elapsed - start).Seconds, (totalLinks) / (elapsed - start).Seconds);
 
             // Dump data to log
-            LogLine("Anchors");
-            LogLine(repository.Anchors.JsonSerialize(true));
-            LogLine("AnchorTextExactRelations");
-            LogLine(repository.AnchorTextExactRelations.JsonSerialize(true));
-            LogLine("DomainOrSubdomains");
-            LogLine(repository.DomainOrSubdomains.JsonSerialize(true));
-            LogLine("Domains");
-            LogLine(repository.Domains.JsonSerialize(true));
-            LogLine("LinkCrawlDateCurrent");
-            LogLine(repository.LinkCrawlDateCurrent.JsonSerialize(true));
-            LogLine("LinkCrawlDateHistory");
-            LogLine(repository.LinkCrawlDateHistory.JsonSerialize(true));
-            LogLine("LinkRating");
-            LogLine(repository.LinkRating.JsonSerialize(true));
+            //LogLine("Anchors");
+            //LogLine(repository.Anchors.JsonSerialize(true));
+            //LogLine("AnchorTextExactRelations");
+            //LogLine(repository.AnchorTextExactRelations.JsonSerialize(true));
+            //LogLine("DomainOrSubdomains");
+            //LogLine(repository.DomainOrSubdomains.JsonSerialize(true));
+            //LogLine("Domains");
+            //LogLine(repository.Domains.JsonSerialize(true));
+            //LogLine("LinkCrawlDateCurrent");
+            //LogLine(repository.LinkCrawlDateCurrent.JsonSerialize(true));
+            //LogLine("LinkCrawlDateHistory");
+            //LogLine(repository.LinkCrawlDateHistory.JsonSerialize(true));
+            //LogLine("LinkRating");
+            //LogLine(repository.LinkRating.JsonSerialize(true));
             //LogLine("Links");
             //LogLine(repository.Links.ToArray().Where((kv) => { return kv.Value.IsDirty; }).JsonSerialize(true));
-            LogLine("LinkStatusCurrent");
-            LogLine(repository.LinkStatusCurrent.JsonSerialize(true));
-            LogLine("LinkStatusHistory");
-            LogLine(repository.LinkStatusHistory.JsonSerialize(true));
+            //LogLine("LinkStatusCurrent");
+            //LogLine(repository.LinkStatusCurrent.JsonSerialize(true));
+            //LogLine("LinkStatusHistory");
+            //LogLine(repository.LinkStatusHistory.JsonSerialize(true));
 
             // Write log to file
             SaveLog();
@@ -236,7 +239,7 @@ namespace LinkSpider3
             CollectorProcessorEventArgs progress = new CollectorProcessorEventArgs();
             progress.CollectorID = state.CollectorID;
 
-            string link = state.PoolManagerHandler(state.Pool, state.History, state.DomainHistory);
+            string link = state.PoolManagerHandler(state.Pool, state.UrlHistory, state.DomainHistory);
             while (!link.IsNullOrEmpty() && !state.CancelToken.IsCancellationRequested)
             {
                 ManualResetEvent done = new ManualResetEvent(false);
@@ -249,6 +252,11 @@ namespace LinkSpider3
 
                 if (uri != null)
                 {
+                    HtmlProcessor.LinkInfo currentUrlLinkInfo = new HtmlProcessor.LinkInfo((state.TldParser))
+                    {
+                        Href = uri.ToString()
+                    };
+
                     progress.Message = string.Format("{0} (fetching)", uri);
                     state.ProgressHandler(progress);
 
@@ -262,17 +270,13 @@ namespace LinkSpider3
                                     "responded: " + ea.Stream.Length + " bytes" :
                                     "exception: " + ea.Exception.Message));
                             state.ProgressHandler(progress);
+
+                            currentUrlLinkInfo.Status = (int)ea.Status;
                             //Thread.Sleep(2000);
 
                             if (ea.Stream.IsNull())
                             {
-                                state.Repository.SaveLink(uri.ToString(), string.Empty, string.Empty, new HtmlProcessor.LinkInfo(
-                                    ((TldParser)ea.Properties["TldParser"]))
-                                {
-                                    Href = uri.ToString(),
-                                    Status = (int)ea.Status
-                                });
-                                    
+                                state.Repository.SaveLink(uri.ToString(), string.Empty, string.Empty, currentUrlLinkInfo);
                                 //Thread.Sleep(5000);
                             }
                             else
@@ -286,31 +290,52 @@ namespace LinkSpider3
                                 state.ProgressHandler(progress);
                                 //Thread.Sleep(2000);
 
-                                int pushedLinks = 0;
-                                int linkCounter = 1;
-                                processor.Links.ForEach(l =>
+                                // Check if there is an external link
+                                bool hasExternalLink = false;
+                                foreach (var l in processor.Links)
                                 {
-                                    progress.Message = string.Format(
-                                        "{0} (processing={1} of {2})",
-                                        uri,
-                                        linkCounter,
-                                        processor.Links.Count);
-                                    state.ProgressHandler(progress);
+                                    if (l.Domain != currentUrlLinkInfo.Domain)
+                                    {
+                                        hasExternalLink = true;
+                                        break;
+                                    }
+                                }
 
-                                    //if (state.Robots.IsAllowed(string.Empty, l.Href.ToUri()))
-                                    //{
-                                    ++pushedLinks;
-                                    state.Pool.Store(l.Href);
+                                // There is at least one external link
+                                if (hasExternalLink)
+                                {
+                                    // Save the current link
+                                    state.Repository.SaveLink(uri.ToString(), string.Empty, string.Empty, currentUrlLinkInfo);
+                                    state.UrlHistory.Add(uri.ToString());
+                                    state.DomainHistory.Add(uri.ToString());
 
-                                    state.Repository.SaveLink(
-                                        uri.ToString(), l.Href, string.Empty, l);
-                                    state.Repository.SaveLink(
-                                        l.Href, string.Empty, uri.ToString(), l);
-                                    state.History.Add(uri.ToString());
-                                    //}
+                                    // Save the kids
+                                    int pushedLinks = 0;
+                                    int linkCounter = 1;
+                                    processor.Links.ForEach(l =>
+                                    {
+                                        progress.Message = string.Format(
+                                            "{0} (processing={1} of {2})",
+                                            uri,
+                                            linkCounter,
+                                            processor.Links.Count);
+                                        state.ProgressHandler(progress);
 
-                                    ++linkCounter;
-                                });
+                                        //if (state.Robots.IsAllowed(string.Empty, l.Href.ToUri()))
+                                        //{
+                                        ++pushedLinks;
+                                        state.UrlHistory.Add(l.Href);
+                                        state.DomainHistory.Add(l.Href);
+                                        state.Pool.Store(l.Href);
+
+                                        state.Repository.SaveLink(uri.ToString(), l.Href, string.Empty, l);
+                                        state.Repository.SaveLink(l.Href, string.Empty, uri.ToString(), l);
+                                        state.DomainHistory.Remove(l.Href);
+                                        //}
+
+                                        ++linkCounter;
+                                    });
+                                }
 
                                 progress.Message = string.Format("{0} [DONE]", uri);
                                 state.ProgressHandler(progress);
@@ -323,45 +348,78 @@ namespace LinkSpider3
 
                     web.Download();
                     done.WaitOne();
+
+                    // Remove from the buffer so that collectors can crawl again the domain
+                    state.DomainHistory.Remove(link);
                 }
 
 
                 // Fetch next link
-                link = state.PoolManagerHandler(state.Pool, state.History, state.DomainHistory);
+                link = state.PoolManagerHandler(state.Pool, state.UrlHistory, state.DomainHistory);
             }
 
             //state.Countdown.Signal();
+            progress.Message = "NO URL IN THE POOL";
+            state.ProgressHandler(progress);
         }
+
 
         static string PoolManager(
             CollectorPool pool, 
-            VisitedUrlHistory history,
+            VisitedUrlHistory urlHistory,
             VisitedDomainHistory domainHistory)
         {
             string link = pool.Next();
-            while (link.ToUri().IsNull() || history.ContainsUrl(link.ToUri().ToString()))
+            Uri uri = link.ToUri();
+
+            if (uri.IsNull())
+                return string.Empty; // No more links in the pool
+
+            // Check if url has been visited within this session
+            while (
+                urlHistory.ContainsUrl(uri.ToString()) ||
+                domainHistory.ContainsDomain(uri.ToString()) ||
+                IsExcludedDomain(pool, uri))
             {
                 link = pool.Next();
+                uri = link.ToUri();
+
+                if (uri.IsNull())
+                    return string.Empty; // No more links in the pool
             }
 
             // Recursively check if host is still processed
-            if (domainHistory.ContainsHost(link.ToUri().ToString()))
-            {
-                // Store the link back to pool
-                pool.Store(link.ToUri().ToString());
-                return PoolManager(pool, history, domainHistory);
-            }
-            else
-            {
-                // Add to history
-                history.Add(link.ToUri().ToString());
-                domainHistory.Add(link.ToUri().ToString());
+            //if (domainHistory.ContainsDomain(uri.ToString()))
+            //{
+            //    // Store the link back to pool
+            //    pool.Store(uri.ToString());
+            //    return PoolManager(pool, urlHistory, domainHistory);
+            //}
+            //else
+            //{
+                // Link is ok, add to history
+                urlHistory.Add(uri.ToString());
+                domainHistory.Add(uri.ToString());
 
-                return link;
-            }
+                return uri.ToString();
+            //}
         }
 
+        static bool IsExcludedDomain(CollectorPool pool, Uri uri)
+        {
+            var li = new HtmlProcessor.LinkInfo(TldParser.Instance);
+            li.Href = uri.ToString();
 
+            foreach (var excludedDomain in pool.ExcludedDomains)
+            {
+                if (li.Domain.IndexOf(excludedDomain) > -1)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
 
         #region Purgatory

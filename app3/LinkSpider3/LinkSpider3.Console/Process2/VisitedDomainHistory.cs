@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 
 using LinkSpider3.Process2.Extensions;
+using LinkSpider3.Process2.Utils;
 
 namespace LinkSpider3.Process2
 {
@@ -18,14 +19,57 @@ namespace LinkSpider3.Process2
 
         public void Add(string url)
         {
-            string host = url.ToUri().Host;
-
-            if (!ContainsHost(url))
+            Uri uri = url.ToUri();
+            if (!uri.IsNull())
             {
-                locker.EnterWriteLock();
+                if (!ContainsDomain(url))
+                {
+                    locker.EnterWriteLock();
+                    try
+                    {
+                        visitedDomainHistory.Add(GetDomain(url).ToHash());
+                    }
+                    finally
+                    {
+                        locker.ExitWriteLock();
+                    }
+                }
+            }
+        }
+
+        public bool ContainsDomain(string url)
+        {
+            Uri uri = url.ToUri();
+
+            if (uri.IsNull())
+            {
+                return false;
+            }
+            else
+            {
+                locker.EnterReadLock();
+
                 try
                 {
-                    visitedDomainHistory.Add(host.ToHash());
+                    return visitedDomainHistory.Contains(GetDomain(url).ToHash());
+                }
+                finally
+                {
+                    locker.ExitReadLock();
+                }
+            }
+        }
+
+        public void Remove(string url)
+        {
+            Uri uri = url.ToUri();
+
+            if (!uri.IsNull())
+            {
+                try
+                {
+                    locker.EnterWriteLock();
+                    visitedDomainHistory.Remove(GetDomain(url).ToHash());
                 }
                 finally
                 {
@@ -34,19 +78,11 @@ namespace LinkSpider3.Process2
             }
         }
 
-        public bool ContainsHost(string url)
+        static string GetDomain(string url)
         {
-            string host = url.ToUri().Host;
-            locker.EnterReadLock();
-
-            try
-            {
-                return visitedDomainHistory.Contains(host.ToHash());
-            }
-            finally
-            {
-                locker.ExitReadLock();
-            }
+            HtmlProcessor.LinkInfo li = new HtmlProcessor.LinkInfo(TldParser.Instance);
+            li.Href = url;
+            return li.Domain;
         }
 
         #region Disposable

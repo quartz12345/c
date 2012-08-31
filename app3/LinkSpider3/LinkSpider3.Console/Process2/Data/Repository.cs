@@ -144,10 +144,10 @@ namespace LinkSpider3.Process2.Data
             l.Id = link.ToHashString();
             l.Link = link;
             l.Domain = linkInfo.Domain;
-            l.DomainOrSubdomain = linkInfo.DomainOrSubdomain;
+            //l.DomainOrSubdomain = linkInfo.DomainOrSubdomain;
             l.DomainScheme = linkInfo.DomainScheme;
             l.Tld = linkInfo.Tld;
-            l.IP = IP.GetIPAddress(l.DomainOrSubdomain);
+            l.IP = IP.GetIPAddress(l.Domain);
             l.IPType = IP.GetIPClassFamily2(l.IP);
             l.Title = linkInfo.Title;
 
@@ -281,21 +281,21 @@ namespace LinkSpider3.Process2.Data
 
 
             // DomainOrSubdomains
-            SimpleObject<DomainOrSubdomainData> so7a = new SimpleObject<DomainOrSubdomainData>
-            {
-                Id = l.DomainOrSubdomain.ToHashString(),
-                Value = new DomainOrSubdomainData { DomainOrSubdomain = l.DomainOrSubdomain, Links = new List<string> { l.Id } }
-            };
-            DomainOrSubdomains.AddOrUpdate(so7a.Id, so7a,
-                (key, oldSo7a) =>
-                {
-                    if (oldSo7a.Value.IsNull())
-                        oldSo7a.Value = new DomainOrSubdomainData { DomainOrSubdomain = l.DomainOrSubdomain, Links = new List<string> { l.Id } };
+            //SimpleObject<DomainOrSubdomainData> so7a = new SimpleObject<DomainOrSubdomainData>
+            //{
+            //    Id = l.DomainOrSubdomain.ToHashString(),
+            //    Value = new DomainOrSubdomainData { DomainOrSubdomain = l.DomainOrSubdomain, Links = new List<string> { l.Id } }
+            //};
+            //DomainOrSubdomains.AddOrUpdate(so7a.Id, so7a,
+            //    (key, oldSo7a) =>
+            //    {
+            //        if (oldSo7a.Value.IsNull())
+            //            oldSo7a.Value = new DomainOrSubdomainData { DomainOrSubdomain = l.DomainOrSubdomain, Links = new List<string> { l.Id } };
 
-                    if (!oldSo7a.Value.Links.Contains(l.Id))
-                        oldSo7a.Value.Links.Add(l.Id);
-                    return oldSo7a;
-                });
+            //        if (!oldSo7a.Value.Links.Contains(l.Id))
+            //            oldSo7a.Value.Links.Add(l.Id);
+            //        return oldSo7a;
+            //    });
 
 
             // AnchorData
