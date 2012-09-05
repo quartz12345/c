@@ -20,12 +20,12 @@ namespace LinkSpider3
         internal class TaskState
         {
             public CollectorPool Pool;
-            public VisitedUrlHistory UrlHistory;
-            public VisitedDomainHistory DomainHistory;
+            public VisitedUrls VisitedUrls;
+            public VisitedDomains VisitedDomains;
             public TldParser TldParser;
             public RobotService Robots;
             public Repository Repository;
-            public Func<CollectorPool, VisitedUrlHistory, VisitedDomainHistory, string> PoolManagerHandler;
+            public Func<CollectorPool, VisitedUrls, VisitedDomains, string> PoolManagerHandler;
             public Action<CollectorProcessorEventArgs> ProgressHandler;
             public CancellationToken CancelToken;
             //public CountdownEvent Countdown;
@@ -59,7 +59,7 @@ namespace LinkSpider3
 
             LogBuffer = new StringBuilder();
 
-            int parallelCount = 5;
+            int parallelCount = 15;
             //string provider = "redis";
             //string server = "127.0.0.1";
             //string port = "6379";
@@ -93,8 +93,8 @@ namespace LinkSpider3
 
             RobotService robots = new RobotService();
             CollectorPool pool;
-            VisitedUrlHistory history;
-            VisitedDomainHistory domainHistory = new VisitedDomainHistory();
+            VisitedUrls history;
+            VisitedDomains domainHistory = new VisitedDomains();
 
 
             int poolCount = 0;
@@ -104,7 +104,6 @@ namespace LinkSpider3
             pool.Store("dmoz.org");
             pool.Store("dir.yahoo.com");
             pool.Store("lixam.com");
-            pool.Store("lixma.com");
 
             poolCount = pool.Count;
             LogLine("done. Found " + poolCount);
@@ -144,8 +143,8 @@ namespace LinkSpider3
             {
                 TaskState state = new TaskState();
                 state.Pool = pool;
-                state.UrlHistory = history;
-                state.DomainHistory = domainHistory;
+                state.VisitedUrls = history;
+                state.VisitedDomains = domainHistory;
                 state.TldParser = tldParser;
                 state.Robots = robots;
                 state.Repository = repository;
@@ -239,7 +238,7 @@ namespace LinkSpider3
             CollectorProcessorEventArgs progress = new CollectorProcessorEventArgs();
             progress.CollectorID = state.CollectorID;
 
-            string link = state.PoolManagerHandler(state.Pool, state.UrlHistory, state.DomainHistory);
+            string link = state.PoolManagerHandler(state.Pool, state.VisitedUrls, state.VisitedDomains);
             while (!link.IsNullOrEmpty() && !state.CancelToken.IsCancellationRequested)
             {
                 ManualResetEvent done = new ManualResetEvent(false);
@@ -306,8 +305,8 @@ namespace LinkSpider3
                                 {
                                     // Save the current link
                                     state.Repository.SaveLink(uri.ToString(), string.Empty, string.Empty, currentUrlLinkInfo);
-                                    state.UrlHistory.Add(uri.ToString());
-                                    state.DomainHistory.Add(uri.ToString());
+                                    state.VisitedUrls.Add(uri.ToString());
+                                    state.VisitedDomains.Add(uri.ToString());
 
                                     // Save the kids
                                     int pushedLinks = 0;
@@ -324,13 +323,23 @@ namespace LinkSpider3
                                         //if (state.Robots.IsAllowed(string.Empty, l.Href.ToUri()))
                                         //{
                                         ++pushedLinks;
-                                        state.UrlHistory.Add(l.Href);
-                                        state.DomainHistory.Add(l.Href);
+                                        state.VisitedUrls.Add(l.Href);
+                                        state.VisitedDomains.Add(l.Href);
                                         state.Pool.Store(l.Href);
 
-                                        state.Repository.SaveLink(uri.ToString(), l.Href, string.Empty, l);
-                                        state.Repository.SaveLink(l.Href, string.Empty, uri.ToString(), l);
-                                        state.DomainHistory.Remove(l.Href);
+                                        HtmlProcessor.LinkInfo childLinkInfo = currentUrlLinkInfo;
+                                        childLinkInfo.AnchorText = l.AnchorText;
+                                        childLinkInfo.AnchorRel = l.AnchorRel;
+                                        childLinkInfo.AnchorKind = l.AnchorKind;
+
+                                        HtmlProcessor.LinkInfo backLinkInfo = l;
+                                        backLinkInfo.AnchorText = string.Empty;
+                                        backLinkInfo.AnchorRel = string.Empty;
+                                        backLinkInfo.AnchorKind = string.Empty;
+
+                                        state.Repository.SaveLink(uri.ToString(), l.Href, string.Empty, childLinkInfo);
+                                        state.Repository.SaveLink(l.Href, string.Empty, uri.ToString(), backLinkInfo);
+                                        state.VisitedDomains.Remove(l.Href);
                                         //}
 
                                         ++linkCounter;
@@ -350,12 +359,12 @@ namespace LinkSpider3
                     done.WaitOne();
 
                     // Remove from the buffer so that collectors can crawl again the domain
-                    state.DomainHistory.Remove(link);
+                    state.VisitedDomains.Remove(link);
                 }
 
 
                 // Fetch next link
-                link = state.PoolManagerHandler(state.Pool, state.UrlHistory, state.DomainHistory);
+                link = state.PoolManagerHandler(state.Pool, state.VisitedUrls, state.VisitedDomains);
             }
 
             //state.Countdown.Signal();
@@ -366,8 +375,8 @@ namespace LinkSpider3
 
         static string PoolManager(
             CollectorPool pool, 
-            VisitedUrlHistory urlHistory,
-            VisitedDomainHistory domainHistory)
+            VisitedUrls urlHistory,
+            VisitedDomains domainHistory)
         {
             string link = pool.Next();
             Uri uri = link.ToUri();
@@ -423,7 +432,7 @@ namespace LinkSpider3
 
 
         #region Purgatory
-        private static void TestRun1(int WORK_AREA_TOP, int parallelCount, Repository repository, RobotService robots, CollectorPool pool, VisitedUrlHistory history, TldParser tldParser)
+        private static void TestRun1(int WORK_AREA_TOP, int parallelCount, Repository repository, RobotService robots, CollectorPool pool, VisitedUrls history, TldParser tldParser)
         {
             CreateCollectorPool(pool, history, parallelCount).ForEach(
                 c =>
@@ -501,7 +510,7 @@ namespace LinkSpider3
 
         static List<Collector> CreateCollectorPool(
             CollectorPool pool,
-            VisitedUrlHistory history,
+            VisitedUrls history,
             int parallelCount)
         {
             List<Collector> collectors = new List<Collector>(parallelCount);

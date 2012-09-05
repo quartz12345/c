@@ -120,8 +120,8 @@
     <Compile Include="Process2\Utils\CRC32.cs" />
     <Compile Include="Process2\Utils\IP.cs" />
     <Compile Include="Process2\Utils\RabinFingerPrint.cs" />
-    <Compile Include="Process2\VisitedDomainHistory.cs" />
-    <Compile Include="Process2\VisitedUrlHistory.cs" />
+    <Compile Include="Process2\VisitedDomains.cs" />
+    <Compile Include="Process2\VisitedUrls.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">

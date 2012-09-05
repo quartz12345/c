@@ -78,15 +78,15 @@ namespace LinkSpider3.Process2
             }
             else
             {
-                //if (top1MLinks.IsNull())
-                //    top1MLinks = Regex.Split(Properties.Resources.top_1m, "[\r\n]+");
+                if (top1MLinks.IsNull())
+                    top1MLinks = Regex.Split(Properties.Resources.top_1m, "[\r\n]+");
 
-                //string link = top1MLinks[currentTop1MCounter].Split(',')[1];
+                string link = top1MLinks[currentTop1MCounter].Split(',')[1];
 
-                //++currentTop1MCounter;
+                ++currentTop1MCounter;
 
-                //return link;
-                return string.Empty;
+                return link;
+                //return string.Empty;
             }
         }
 

@@ -104,9 +104,9 @@ namespace LinkSpider3.Process2
                         throw new ArgumentException("LinkInfo.Href is passed with an invalid url.");
                     
                     DomainScheme = uri.Scheme;
-                    Domain = uri.Host;
+                    Domain = ExtractDomainNameFromURL_Method2(uri.ToString());
                     //DomainOrSubdomain = uri.Host;
-                    Tld = this.tldParser.GetTld(uri.Host);
+                    Tld = this.tldParser.GetTld(Domain);
 
                     // Get the correct domain
                     //if (Tld.IsNullOrEmpty())
@@ -146,6 +146,15 @@ namespace LinkSpider3.Process2
             public LinkInfo(TldParser tldParser)
             {
                 this.tldParser = tldParser;
+            }
+
+
+            public static string ExtractDomainNameFromURL_Method2(string Url)
+            {
+                if (Url.Contains(@"://"))
+                    Url = Url.Split(new string[] { "://" }, 2, StringSplitOptions.None)[1];
+
+                return Url.Split('/')[0];
             }
         }
     }

@@ -7,7 +7,7 @@ using LinkSpider3.Process2.Extensions;
 
 namespace LinkSpider3.Process2
 {
-    public class VisitedUrlHistory
+    public class VisitedUrls
         : Core.DisposableBase
     {
         private HashSet<UInt64> visitedUrlHistory = new HashSet<UInt64>();

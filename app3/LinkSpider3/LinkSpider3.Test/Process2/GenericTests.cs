@@ -132,16 +132,19 @@ namespace LinkSpider3.Test.Process2
             
             HtmlProcessor.LinkInfo li = new HtmlProcessor.LinkInfo(parser);
             li.Href = "google.com";
-            Assert.IsTrue(li.Domain == "google.com");
+            Assert.IsTrue(li.Domain == "www.google.com");
             //Assert.IsTrue(li.DomainOrSubdomain == "www.google.com");
             Assert.IsTrue(li.DomainScheme == "http");
             Assert.IsTrue(li.Tld == "com");
 
             li.Href = "jubacs.somee.net.ph";
-            Assert.IsTrue(li.Domain == "somee.net.ph");
+            Assert.IsTrue(li.Domain == "www.jubacs.somee.net.ph");
             //Assert.IsTrue(li.DomainOrSubdomain == "www.jubacs.somee.net.ph");
             Assert.IsTrue(li.DomainScheme == "http");
             Assert.IsTrue(li.Tld == "net.ph");
+
+            li.Href = "http://www.jubacs.somee.com";
+            Assert.IsTrue(li.Domain == "www.jubacs.somee.com");
         }
 
         [TestMethod]

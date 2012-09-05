@@ -82,9 +82,9 @@ namespace LinkSpider3.Process2.Data
             pool = this.persistence.Load<CollectorPool>(null) as CollectorPool;
         }
 
-        public void Load(out VisitedUrlHistory history, DateTime date)
+        public void Load(out VisitedUrls history, DateTime date)
         {
-            history = new VisitedUrlHistory();
+            history = new VisitedUrls();
         }
 
         public void LoadData()
