@@ -130,5 +130,9 @@ http://stackoverflow.com/questions/1391011/rabin-karp-algorithm-in-php
 http://www.scribd.com/doc/49855802/43/Rabin-Karp-%EF%AC%81ngerprinting
 http://stackoverflow.com/questions/9871850/implementation-of-rabin-karp-algorithm-with-php
 
+-------------------
 
+RULES:
+
+how about, say scan the site for about 1000 pages if no external links, skip the collection and jump to other domain
 
