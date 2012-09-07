@@ -291,6 +291,7 @@ namespace LinkSpider3
 
                                 // Check if there is an external link
                                 bool hasExternalLink = false;
+                                int countPage = 0;
                                 foreach (var l in processor.Links)
                                 {
                                     if (l.Domain != currentUrlLinkInfo.Domain)
@@ -298,7 +299,13 @@ namespace LinkSpider3
                                         hasExternalLink = true;
                                         break;
                                     }
+                                    countPage++;
+                                    if (countPage > 1000 && hasExternalLink == false)
+                                    {
+                                        break;
+                                    }
                                 }
+                                
 
                                 // There is at least one external link
                                 if (hasExternalLink)
