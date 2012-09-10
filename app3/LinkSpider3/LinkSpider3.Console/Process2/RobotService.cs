@@ -15,15 +15,18 @@ namespace LinkSpider3.Process2
         : Core.DisposableBase
     {
         #region Cache
-        private ConcurrentDictionary<string, List<string>> cache =
-            new ConcurrentDictionary<string, List<string>>();
+        private ConcurrentDictionary<string, List<string>> cache = new ConcurrentDictionary<string, List<string>>();
         #endregion
+
+        static string user_agent = "Mozilla/5.0 (Windows NT 6.1; rv:15.0) Gecko/20100101 Firefox/15.0.1";
 
         public List<string> GetDenyUrls(string host)
         {
             if (cache.ContainsKey(host))
             {
-                return cache[host];
+                List<string> GetHost = new List<string>();
+                cache.TryGetValue(host, out GetHost);
+                return GetHost;
             }
             else
             {
@@ -57,6 +60,7 @@ namespace LinkSpider3.Process2
                                         string instructionLine = sr.ReadLine().ToUpperInvariant();
                                         if (!instructionLine.IsNullOrEmpty())
                                         {
+                                            RobotInstruction ri = new RobotInstruction(instructionLine);
                                             int commentPosition = instructionLine.IndexOf("#");
 
                                             if (commentPosition > -1)
@@ -69,7 +73,7 @@ namespace LinkSpider3.Process2
                                                     // User-agent: *
                                                     int colonPosition = instructionLine.IndexOf(":");
                                                     instructionLine = instructionLine.Substring(colonPosition + 1).Trim();
-                                                    if (instructionLine.StartsWith("*"))
+                                                    if ((instructionLine.StartsWith("*") == true) || ((ri.UrlOrAgent.IndexOf(user_agent) >= 0)))
                                                         rulesApply = true;
                                                     else
                                                         rulesApply = false;
@@ -111,8 +115,7 @@ namespace LinkSpider3.Process2
                 }
 
 
-                cache.AddOrUpdate(host, deniedUrls, 
-                    (s, l) => { return l;  });
+                cache.AddOrUpdate(host, deniedUrls, (s, l) => { return l;  });
                 return deniedUrls;
             }
         }
@@ -130,6 +133,61 @@ namespace LinkSpider3.Process2
             return q.Count() < 1;
         }
 
+        /// <summary>
+        /// Use this class to read/parse the robots.txt file
+        /// </summary>
+        /// <remarks>
+        /// Types of data coming into this class
+        /// User-agent: * ==> _Instruction='User-agent', _Url='*'
+        /// Disallow: /cgi-bin/ ==> _Instruction='Disallow', _Url='/cgi-bin/'
+        /// Disallow: /tmp/ ==> _Instruction='Disallow', _Url='/tmp/'
+        /// Disallow: /~joe/ ==> _Instruction='Disallow', _Url='/~joe/'
+        /// </remarks>
+        private class RobotInstruction
+        {
+            private string _Instruction;
+            private string _Url = string.Empty;
+
+            /// <summary>
+            /// Constructor requires a line, hopefully in the format [instuction]:[url]
+            /// </summary>
+            public RobotInstruction(string line)
+            {
+                string instructionLine = line;
+                int commentPosition = instructionLine.IndexOf('#');
+                if (commentPosition == 0)
+                {
+                    _Instruction = "#";
+                }
+                if (commentPosition >= 0)
+                {   // comment somewhere on the line, trim it off
+                    instructionLine = instructionLine.Substring(0, commentPosition);
+                }
+                if (instructionLine.Length > 0)
+                {   // wasn't just a comment line (which should have been filtered out before this anyway
+                    string[] lineArray = instructionLine.Split(':');
+                    _Instruction = lineArray[0].Trim().ToLower();
+                    if (lineArray.Length > 1)
+                    {
+                        _Url = lineArray[1].Trim();
+                    }
+                }
+            }
+            /// <summary>
+            /// Lower-case part of robots.txt line, before the colon (:)
+            /// </summary>
+            public string Instruction
+            {
+                get { return _Instruction; }
+            }
+            /// <summary>
+            /// Lower-case part of robots.txt line, after the colon (:)
+            /// </summary>
+            public string UrlOrAgent
+            {
+                get { return _Url; }
+            }
+        }
 
         #region Disposable
         protected override void Cleanup()
