@@ -59,7 +59,7 @@ namespace LinkSpider3
 
             LogBuffer = new StringBuilder();
 
-            int parallelCount = 15;
+            int parallelCount = 20;
             //string provider = "redis";
             //string server = "127.0.0.1";
             //string port = "6379";
@@ -291,6 +291,7 @@ namespace LinkSpider3
 
                                 // Check if there is an external link
                                 bool hasExternalLink = false;
+                                bool isAllowed = false;
                                 int countPage = 0;
                                 foreach (var l in processor.Links)
                                 {
@@ -300,12 +301,12 @@ namespace LinkSpider3
                                         break;
                                     }
                                     countPage++;
-                                    if (countPage > 1000 && hasExternalLink == false)
+                                    if (countPage > 500 && hasExternalLink == false)
                                     {
                                         break;
                                     }
+
                                 }
-                                
 
                                 // There is at least one external link
                                 if (hasExternalLink)
