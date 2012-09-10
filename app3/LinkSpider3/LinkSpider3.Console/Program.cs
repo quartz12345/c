@@ -59,7 +59,7 @@ namespace LinkSpider3
 
             LogBuffer = new StringBuilder();
 
-            int parallelCount = 20;
+            int parallelCount = 30;
             //string provider = "redis";
             //string server = "127.0.0.1";
             //string port = "6379";
@@ -291,7 +291,6 @@ namespace LinkSpider3
 
                                 // Check if there is an external link
                                 bool hasExternalLink = false;
-                                bool isAllowed = false;
                                 int countPage = 0;
                                 foreach (var l in processor.Links)
                                 {
@@ -327,7 +326,7 @@ namespace LinkSpider3
                                             linkCounter,
                                             processor.Links.Count);
                                         state.ProgressHandler(progress);
-
+                                        
                                         //if (state.Robots.IsAllowed(string.Empty, l.Href.ToUri()))
                                         //{
                                         ++pushedLinks;
