@@ -3,7 +3,7 @@
   <asmv1:assemblyIdentity name="linkspider3_console.exe" version="1.0.0.1" publicKeyToken="0000000000000000" language="neutral" processorArchitecture="x86" type="win32" />
   <application />
   <entryPoint>
-    <assemblyIdentity name="linkspider3_console" version="1.0.0.27957" language="neutral" processorArchitecture="x86" />
+    <assemblyIdentity name="linkspider3_console" version="1.0.0.35281" language="neutral" processorArchitecture="x86" />
     <commandLine file="linkspider3_console.exe" parameters="" />
   </entryPoint>
   <trustInfo>
@@ -66,14 +66,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="linkspider3_console.exe" size="23869952">
-      <assemblyIdentity name="linkspider3_console" version="1.0.0.27957" language="neutral" processorArchitecture="x86" />
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="linkspider3_console.exe" size="23876608">
+      <assemblyIdentity name="linkspider3_console" version="1.0.0.35281" language="neutral" processorArchitecture="x86" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
-        <dsig:DigestValue>xdHiGKUFhqF0HXzLK1sGfZjYpj8=</dsig:DigestValue>
+        <dsig:DigestValue>FON2TUHmxE81qHLUt3929Kz70nU=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
@@ -113,13 +113,13 @@
       </hash>
     </dependentAssembly>
   </dependency>
-  <file name="linkspider3_console.exe.config" size="1226">
+  <file name="linkspider3_console.exe.config" size="1236">
     <hash>
       <dsig:Transforms>
         <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
       </dsig:Transforms>
       <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
-      <dsig:DigestValue>zEg7DvuBVMuvi9z4OWiXWarHeYQ=</dsig:DigestValue>
+      <dsig:DigestValue>4hh7pQC1YFQfccV7zamEexy/GKw=</dsig:DigestValue>
     </hash>
   </file>
 </asmv1:assembly>

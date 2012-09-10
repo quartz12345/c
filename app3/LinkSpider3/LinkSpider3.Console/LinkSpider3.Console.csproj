@@ -116,6 +116,7 @@
     <Compile Include="Process2\Persistence\PersistenceFactory.cs" />
     <Compile Include="Process2\Persistence\RedisPersistence.cs" />
     <Compile Include="Process2\RobotService.cs" />
+    <Compile Include="Process2\RobotsTxt.cs" />
     <Compile Include="Process2\TldParser.cs" />
     <Compile Include="Process2\Utils\CRC32.cs" />
     <Compile Include="Process2\Utils\IP.cs" />
