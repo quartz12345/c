@@ -136,3 +136,6 @@ RULES:
 
 how about, say scan the site for about 1000 pages if no external links, skip the collection and jump to other domain
 
+-
+learn how to play different anchor texts, like chines characters, how to handle that
+how to make the scanning and fetching domain go faster
