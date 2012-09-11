@@ -139,3 +139,16 @@ how about, say scan the site for about 1000 pages if no external links, skip the
 -
 learn how to play different anchor texts, like chines characters, how to handle that
 how to make the scanning and fetching domain go faster
+
+---
+
+BEAST APPROACH
+
+1. get links on a site
+2. check load speed on each link collected
+3. divide the link to two list, say the first list is
+AceList ; where the page load is less than or equal to 4 seconds
+and
+Reserve ; the rest of the links
+
+on the next loop the script will look on the AceList to process and do again step 1 to step 3
