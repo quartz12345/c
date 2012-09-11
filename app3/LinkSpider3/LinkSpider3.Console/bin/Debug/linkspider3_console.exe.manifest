@@ -3,7 +3,7 @@
   <asmv1:assemblyIdentity name="linkspider3_console.exe" version="1.0.0.1" publicKeyToken="0000000000000000" language="neutral" processorArchitecture="x86" type="win32" />
   <application />
   <entryPoint>
-    <assemblyIdentity name="linkspider3_console" version="1.0.0.35281" language="neutral" processorArchitecture="x86" />
+    <assemblyIdentity name="linkspider3_console" version="1.0.0.31065" language="neutral" processorArchitecture="x86" />
     <commandLine file="linkspider3_console.exe" parameters="" />
   </entryPoint>
   <trustInfo>
@@ -66,14 +66,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="linkspider3_console.exe" size="23876608">
-      <assemblyIdentity name="linkspider3_console" version="1.0.0.35281" language="neutral" processorArchitecture="x86" />
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="linkspider3_console.exe" size="23875584">
+      <assemblyIdentity name="linkspider3_console" version="1.0.0.31065" language="neutral" processorArchitecture="x86" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
-        <dsig:DigestValue>FON2TUHmxE81qHLUt3929Kz70nU=</dsig:DigestValue>
+        <dsig:DigestValue>ytPLdMiWg3o1RRSmspRSLrWmVEc=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
