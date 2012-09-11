@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
+using System.Net;
+using System.Diagnostics;
 
 using LinkSpider3.Process2;
 using LinkSpider3.Process2.Data;
@@ -59,7 +61,7 @@ namespace LinkSpider3
 
             LogBuffer = new StringBuilder();
 
-            int parallelCount = 30;
+            int parallelCount = 60;
             //string provider = "redis";
             //string server = "127.0.0.1";
             //string port = "6379";
@@ -100,10 +102,14 @@ namespace LinkSpider3
             int poolCount = 0;
             Log("Loading pool...");
             repository.Load(out pool);
-            pool.Store("jubacs.somee.com");
-            pool.Store("dmoz.org");
-            pool.Store("dir.yahoo.com");
-            pool.Store("lixam.com");
+            pool.Store("articleteller.com");
+            pool.Store("jobsearcho.com.au");
+            pool.Store("entertainmentnewsdaily.com ");
+            pool.Store("msbgwcnews.com");
+            pool.Store("mrotoday.com");
+            pool.Store("openhack.com");
+            pool.Store("tvrundown.com");
+            pool.Store("webgazeteler.com");
 
             poolCount = pool.Count;
             LogLine("done. Found " + poolCount);
@@ -248,8 +254,18 @@ namespace LinkSpider3
 
 
                 Uri uri = link.ToUri();
+                bool isPageLoadAllowed = false;
+                //targetTime set to 5 seconds
+                TimeSpan targetTime = new TimeSpan(0, 0, 0, 5);
+                TimeSpan checkTime = HtmlPageLoadCheck(uri.ToString());
+                //if checkTime is less than 5 seconds set isPageLoadAllowed to True
+                if (TimeSpan.Compare(checkTime, targetTime) == -1)
+                {
+                    isPageLoadAllowed = true;
+                }
 
-                if (uri != null)
+
+                if (uri != null && isPageLoadAllowed == true)
                 {
                     HtmlProcessor.LinkInfo currentUrlLinkInfo = new HtmlProcessor.LinkInfo((state.TldParser))
                     {
@@ -292,6 +308,7 @@ namespace LinkSpider3
                                 // Check if there is an external link
                                 bool hasExternalLink = false;
                                 int countPage = 0;
+                                
                                 foreach (var l in processor.Links)
                                 {
                                     if (l.Domain != currentUrlLinkInfo.Domain)
@@ -308,7 +325,7 @@ namespace LinkSpider3
                                 }
 
                                 // There is at least one external link
-                                if (hasExternalLink)
+                                if (hasExternalLink == true)
                                 {
                                     // Save the current link
                                     state.Repository.SaveLink(uri.ToString(), string.Empty, string.Empty, currentUrlLinkInfo);
@@ -437,6 +454,24 @@ namespace LinkSpider3
             return false;
         }
 
+
+        static TimeSpan HtmlPageLoadCheck(String Url)
+        {
+            String _url = @Url;
+            WebClient client = new WebClient();
+            client.Headers.Add("user-agent", "Mozilla/5.0 (Windows NT 6.1; rv:15.0) Gecko/20100101 Firefox/15.0.1");
+
+            Stopwatch timer = new Stopwatch();
+            timer.Start();
+            Stream data = client.OpenRead(_url);
+            StreamReader reader = new StreamReader(data);
+            string s = reader.ReadToEnd();
+            timer.Stop();
+            data.Close();
+            reader.Close();
+
+            return timer.Elapsed;
+        }
 
         #region Purgatory
         private static void TestRun1(int WORK_AREA_TOP, int parallelCount, Repository repository, RobotService robots, CollectorPool pool, VisitedUrls history, TldParser tldParser)
