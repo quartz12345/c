@@ -157,5 +157,12 @@ namespace LinkSpider3.Process2
                 return Url.Split('/')[0];
             }
         }
+        //To Be Used
+        public long getFileSize(string Url){
+            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(Url);
+            req.Method = "HEAD";
+            HttpWebResponse resp = (HttpWebResponse)req.GetResponse();
+            return resp.ContentLength;
+        }
     }
 }

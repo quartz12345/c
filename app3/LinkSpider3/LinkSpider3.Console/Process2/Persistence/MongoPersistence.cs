@@ -20,7 +20,18 @@ namespace LinkSpider3.Process2.Persistence
 
         public MongoPersistence(IDictionary<string, string> properties)
         {
-            string connectionString = string.Format("mongodb://{0}/?safe=true", properties["server"]);
+            //This will check if username and password on Program.cs for mongoDB: TODO
+            string connectionString = "";
+           // if (properties["user"] != "" && properties["pass"] != "")
+            //{
+               // connectionString = string.Format("mongodb://{0}:{1}@{2}/?safe=true", new object[] {properties["user"], properties["pass"], properties["server"]});
+            //}
+            //else
+            //{
+               // connectionString = string.Format("mongodb://{0}/?safe=true", properties["server"]);
+            //}
+
+            connectionString = "mongodb://madmin:mpass@127.0.0.1/?safe=true";
             this.server = MongoServer.Create(connectionString);
             this.database = this.server.GetDatabase(properties["database"]);
         }

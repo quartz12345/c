@@ -61,7 +61,7 @@ namespace LinkSpider3
 
             LogBuffer = new StringBuilder();
 
-            int parallelCount = 60;
+            int parallelCount = 80;
             //string provider = "redis";
             //string server = "127.0.0.1";
             //string port = "6379";
@@ -69,6 +69,8 @@ namespace LinkSpider3
             string server = "127.0.0.1";
             string port = "27017";
             string database = "ls";
+            string username = "madmin";
+            string password = "mpass";
 
             Console.CancelKeyPress += new ConsoleCancelEventHandler(Console_CancelKeyPress);
             PrintAndClearHeaderArea();
@@ -82,7 +84,9 @@ namespace LinkSpider3
                     {
                         { "server", server },
                         { "port", port },
-                        { "database", database }
+                        { "database", database },
+                        { "user", username },
+                        { "pass", password }
                     });
             
             if (!persistence.Ping())
@@ -102,14 +106,18 @@ namespace LinkSpider3
             int poolCount = 0;
             Log("Loading pool...");
             repository.Load(out pool);
-            pool.Store("articleteller.com");
-            pool.Store("jobsearcho.com.au");
-            pool.Store("entertainmentnewsdaily.com ");
-            pool.Store("msbgwcnews.com");
-            pool.Store("mrotoday.com");
-            pool.Store("openhack.com");
-            pool.Store("tvrundown.com");
-            pool.Store("webgazeteler.com");
+            pool.Store("squidoo.com");
+            pool.Store("ezinearticles.com");
+            pool.Store("hubpages.com");
+            pool.Store("technorati.com");
+            pool.Store("buzzle.com");
+            pool.Store("suite101.com");
+            pool.Store("goarticles.com");
+            pool.Store("apsense.com");
+            pool.Store("allaboutcounseling.com");
+            pool.Store("digg.com");
+            pool.Store("dmoz.org");
+            pool.Store("dir.yahoo.com");
 
             poolCount = pool.Count;
             LogLine("done. Found " + poolCount);
@@ -317,7 +325,7 @@ namespace LinkSpider3
                                         break;
                                     }
                                     countPage++;
-                                    if (countPage > 500 && hasExternalLink == false)
+                                    if (countPage > 400 && hasExternalLink == false)
                                     {
                                         break;
                                     }
