@@ -30,6 +30,8 @@ namespace LinkSpider3
             public Func<CollectorPool, VisitedUrls, VisitedDomains, string> PoolManagerHandler;
             public Action<CollectorProcessorEventArgs> ProgressHandler;
             public CancellationToken CancelToken;
+            //TODO
+            //public MongoPersistence MongoPersistence;
             //public CountdownEvent Countdown;
             public int CollectorID;
         }
@@ -40,8 +42,6 @@ namespace LinkSpider3
             public string Message { get; internal set; }
             public int CollectorID { get; internal set; }
         }
-
-
 
         //static ManualResetEvent allDone = new ManualResetEvent(false);
         const int WORK_AREA_TOP = 3;
@@ -248,11 +248,12 @@ namespace LinkSpider3
         static void CollectorProcessor(object s)
         {
             TaskState state = (TaskState)s;
-
+            
             CollectorProcessorEventArgs progress = new CollectorProcessorEventArgs();
             progress.CollectorID = state.CollectorID;
 
             string link = state.PoolManagerHandler(state.Pool, state.VisitedUrls, state.VisitedDomains);
+                       
             while (!link.IsNullOrEmpty() && !state.CancelToken.IsCancellationRequested)
             {
                 ManualResetEvent done = new ManualResetEvent(false);
@@ -263,7 +264,8 @@ namespace LinkSpider3
 
                 Uri uri = link.ToUri();
                 bool isPageLoadAllowed = false;
-                //targetTime set to 5 seconds
+                bool isAllowedCrawl = true; //to be changed
+                //targetTime set to 4 seconds
                 TimeSpan targetTime = new TimeSpan(0, 0, 0, 5);
                 TimeSpan checkTime = HtmlPageLoadCheck(uri.ToString());
                 //if checkTime is less than 5 seconds set isPageLoadAllowed to True
@@ -271,9 +273,10 @@ namespace LinkSpider3
                 {
                     isPageLoadAllowed = true;
                 }
+                //TODO
+                //isAllowedCrawl = state.MongoPersistence.isToCrawl(uri.ToString());
 
-
-                if (uri != null && isPageLoadAllowed == true)
+                if (uri != null && isPageLoadAllowed == true && isAllowedCrawl == true)
                 {
                     HtmlProcessor.LinkInfo currentUrlLinkInfo = new HtmlProcessor.LinkInfo((state.TldParser))
                     {

@@ -17,6 +17,7 @@ namespace LinkSpider3.Process2.Persistence
     {
         MongoServer server;
         MongoDatabase database;
+        //MongoCollection<BsonDocument> collection;
 
         public MongoPersistence(IDictionary<string, string> properties)
         {
@@ -31,7 +32,7 @@ namespace LinkSpider3.Process2.Persistence
                // connectionString = string.Format("mongodb://{0}/?safe=true", properties["server"]);
             //}
 
-            connectionString = "mongodb://madmin:mpass@127.0.0.1/?safe=true";
+            connectionString = "mongodb://madmin:mpass@50.62.1.71/?safe=true";
             this.server = MongoServer.Create(connectionString);
             this.database = this.server.GetDatabase(properties["database"]);
         }
@@ -101,5 +102,23 @@ namespace LinkSpider3.Process2.Persistence
         {
             get { return "mongodb"; }
         }
+        /*
+        public bool isToCrawl(string Url)
+        {
+            bool crawl = false;
+            String urlCRC32 = Url.ToHashString();
+            String dateToday = DateTime.Today.ToString("yyMMdd");
+            var query = new QueryDocument {
+                { "_id", urlCRC32 },
+                { "Date", dateToday }
+            };
+            this.collection = this.database.GetCollection("urn:link:crawldate:current");
+            if (this.collection.Find(query).Count() == 0)
+            {
+                crawl = true;
+            }
+            return crawl;
+        }
+         * */
     }
 }
