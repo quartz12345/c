@@ -61,16 +61,15 @@ namespace LinkSpider3
 
             LogBuffer = new StringBuilder();
 
-            int parallelCount = 80;
+            int parallelCount = 70;
             //string provider = "redis";
             //string server = "127.0.0.1";
             //string port = "6379";
             string provider = "mongodb";
-            string server = "127.0.0.1";
+            string server = "50.62.1.71";
             string port = "27017";
             string database = "ls";
-            string username = "madmin";
-            string password = "mpass";
+
 
             Console.CancelKeyPress += new ConsoleCancelEventHandler(Console_CancelKeyPress);
             PrintAndClearHeaderArea();
@@ -84,9 +83,7 @@ namespace LinkSpider3
                     {
                         { "server", server },
                         { "port", port },
-                        { "database", database },
-                        { "user", username },
-                        { "pass", password }
+                        { "database", database }
                     });
             
             if (!persistence.Ping())
@@ -266,9 +263,9 @@ namespace LinkSpider3
                 bool isPageLoadAllowed = false;
                 bool isAllowedCrawl = true; //to be changed
                 //targetTime set to 4 seconds
-                TimeSpan targetTime = new TimeSpan(0, 0, 0, 5);
+                TimeSpan targetTime = new TimeSpan(0, 0, 0, 4);
                 TimeSpan checkTime = HtmlPageLoadCheck(uri.ToString());
-                //if checkTime is less than 5 seconds set isPageLoadAllowed to True
+                //if checkTime is less than 4 seconds set isPageLoadAllowed to True
                 if (TimeSpan.Compare(checkTime, targetTime) == -1)
                 {
                     isPageLoadAllowed = true;
@@ -474,13 +471,20 @@ namespace LinkSpider3
 
             Stopwatch timer = new Stopwatch();
             timer.Start();
-            Stream data = client.OpenRead(_url);
-            StreamReader reader = new StreamReader(data);
-            string s = reader.ReadToEnd();
-            timer.Stop();
-            data.Close();
-            reader.Close();
-
+            try
+            {
+                Stream data = client.OpenRead(_url);
+                StreamReader reader = new StreamReader(data);
+                string s = reader.ReadToEnd();
+                timer.Stop();
+                data.Close();
+                reader.Close();
+                return timer.Elapsed;
+            }
+            catch
+            {
+                timer.Stop();            
+            }
             return timer.Elapsed;
         }
 

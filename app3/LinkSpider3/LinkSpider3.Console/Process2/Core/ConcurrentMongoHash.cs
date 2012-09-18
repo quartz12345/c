@@ -24,7 +24,7 @@ namespace LinkSpider3.Process2.Core
         {
             this.database = database;
             this.name = name;
-            this.collection = database.GetCollection(name);
+            this.collection = this.database.GetCollection(this.name);
         }
 
         protected override void Cleanup()
@@ -75,7 +75,6 @@ namespace LinkSpider3.Process2.Core
                     return v;
                 }
             }
-
             set
             {
                 collection.Save(value);
