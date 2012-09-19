@@ -1,1 +1,1 @@
-SiteStaz
+SiteStatz Webcollection
